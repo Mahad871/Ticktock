@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { DayPicker, type DateRange } from "react-day-picker";
 import { format } from "date-fns";
+import { type DateRange } from "react-day-picker";
 
 import { StatusBadge } from "@/components/timesheets/status-badge";
 import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
 import { apiFetch } from "@/lib/api-client";
 import type { Timesheet, TimesheetStatus } from "@/lib/timesheets";
@@ -277,8 +278,9 @@ export function TimesheetDashboard() {
               </button>
               {showRangePicker && (
                 <div className="absolute z-20 mt-2 rounded-lg border border-[#d7dce5] bg-white p-3 shadow-lg">
-                  <DayPicker
+                  <Calendar
                     mode="range"
+                    defaultMonth={dateRange?.from}
                     selected={dateRange}
                     onSelect={(range) => {
                       setDateRange(range);
@@ -288,7 +290,7 @@ export function TimesheetDashboard() {
                         setEndDate(range.to.toISOString().slice(0, 10));
                     }}
                     numberOfMonths={2}
-                    defaultMonth={dateRange?.from}
+                    className="rounded-lg border shadow-sm"
                   />
                   <div className="flex justify-end gap-2 pt-2">
                     <Button
