@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { signIn } from "next-auth/react";
 
@@ -11,24 +12,30 @@ const defaultPassword =
   process.env.NODE_ENV === "development" ? "password" : "";
 
 export default function Home() {
+  const router = useRouter();
   const [email, setEmail] = useState(defaultEmail);
   const [password, setPassword] = useState(defaultPassword);
   const [rememberMe, setRememberMe] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setSubmitting(true);
+    setError(null);
     const result = await signIn("credentials", {
       email,
       password,
       rememberMe,
       redirect: false,
+      callbackUrl: "/dashboard",
     });
-    if (result?.error) {
-      alert(result.error);
+    if (result?.error || result?.ok === false) {
+      setError(result?.error ?? "Unable to sign in.");
+      setSubmitting(false);
+      return;
     }
-    setSubmitting(false);
+    router.push("/dashboard");
   };
 
   return (
@@ -105,6 +112,12 @@ export default function Home() {
                 Remember me
               </label>
             </div>
+
+            {error && (
+              <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                {error}
+              </div>
+            )}
 
             <button
               type="submit"
