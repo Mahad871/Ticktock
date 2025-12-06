@@ -1,65 +1,134 @@
-import Image from "next/image";
+"use client";
+
+import { useState } from "react";
+import { signIn } from "next-auth/react";
+
+import { Input } from "@/components/ui/input";
+
+const defaultEmail =
+  process.env.NODE_ENV === "development" ? "demo@example.com" : "";
+const defaultPassword =
+  process.env.NODE_ENV === "development" ? "password" : "";
 
 export default function Home() {
+  const [email, setEmail] = useState(defaultEmail);
+  const [password, setPassword] = useState(defaultPassword);
+  const [rememberMe, setRememberMe] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setSubmitting(true);
+    const result = await signIn("credentials", {
+      email,
+      password,
+      rememberMe,
+      redirect: false,
+    });
+    if (result?.error) {
+      alert(result.error);
+    }
+    setSubmitting(false);
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between bg-white px-16 py-32 sm:items-start dark:bg-black">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl leading-10 font-semibold tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+    <div className="grid min-h-screen grid-cols-1 lg:grid-cols-[1.05fr_0.95fr]">
+      <div className="flex items-center justify-center bg-white px-6 py-12 lg:px-16">
+        <div className="w-full max-w-xl space-y-8">
+          <div className="space-y-2">
+            <h1 className="text-2xl font-semibold text-[#0f1729]">
+              Welcome back
+            </h1>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-2">
+              <label
+                htmlFor="email"
+                className="text-sm font-medium text-[#0f1729]"
+              >
+                Email
+              </label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="name@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                autoComplete="email"
+                className="h-11 rounded-md border border-[#d7dce5] bg-white text-[15px] text-[#0f1729] shadow-none placeholder:text-[#9aa3b5] focus:border-[#1f63f0] focus:ring-[#1f63f0]"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label
+                htmlFor="password"
+                className="text-sm font-medium text-[#0f1729]"
+              >
+                Password
+              </label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                autoComplete="current-password"
+                className="h-11 rounded-md border border-[#d7dce5] bg-white text-[15px] text-[#0f1729] shadow-none placeholder:text-[#9aa3b5] focus:border-[#1f63f0] focus:ring-[#1f63f0]"
+              />
+            </div>
+
+            {process.env.NODE_ENV === "development" && (
+              <p className="text-sm text-[#6b7280]">
+                Demo:{" "}
+                <span className="font-semibold text-[#0f1729]">
+                  demo@example.com
+                </span>{" "}
+                / <span className="font-semibold text-[#0f1729]">password</span>
+              </p>
+            )}
+
+            <div className="flex items-center gap-3">
+              <input
+                id="rememberMe"
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                className="h-4 w-4 rounded border-[#cbd5e1] text-[#1f63f0] focus:ring-1 focus:ring-[#1f63f0]"
+              />
+              <label
+                htmlFor="rememberMe"
+                className="text-sm font-medium text-[#0f1729]"
+              >
+                Remember me
+              </label>
+            </div>
+
+            <button
+              type="submit"
+              disabled={submitting}
+              className="flex h-12 w-full items-center justify-center rounded-md bg-[#1f63f0] text-[15px] font-semibold text-white transition hover:bg-[#1955cf] disabled:opacity-70"
             >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+              {submitting ? "Signing in..." : "Sign in"}
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <div className="flex items-center justify-center bg-[#1f63f0] px-8 py-16 text-white">
+        <div className="max-w-md space-y-4">
+          <h2 className="text-[34px] font-semibold leading-tight">ticktock</h2>
+          <p className="text-base leading-7 text-white/90">
+            Introducing ticktock, our cutting-edge timesheet web application
+            designed to revolutionize how you manage employee work hours. With
+            ticktock, you can effortlessly track and monitor employee attendance
+            and productivity from anywhere, anytime, using any
+            internet-connected device.
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="bg-foreground text-background flex h-12 w-full items-center justify-center gap-2 rounded-full px-5 transition-colors hover:bg-[#383838] md:w-[158px] dark:hover:bg-[#ccc]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] md:w-[158px] dark:border-white/[.145] dark:hover:bg-[#1a1a1a]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+      </div>
     </div>
   );
 }

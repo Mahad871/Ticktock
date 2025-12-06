@@ -1,0 +1,24 @@
+---
+alwaysApply: true
+---
+
+Reusable, scalable, modular JavaScript code
+The code should be easy to understand, not too complex, and something that any other dev can understand.
+
+evaluation criteria
+
+Category
+Description
+UI/UX
+Responsive, clean layout, and good usability
+Code Quality
+Component structure, modularity, naming conventions
+API Integration
+Proper async handling, error states, token usage
+State Management
+Proper use of hooks or libraries for state
+Testing (Optional)
+Extra credit for tests using any framework
+Readability
+
+Developer empathy (good naming, clear separation of concerns)
