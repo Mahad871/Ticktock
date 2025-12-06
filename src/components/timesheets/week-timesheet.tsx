@@ -1,14 +1,17 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { Plus, MoreHorizontal } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { MoreHorizontal, Plus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { apiFetch } from "@/lib/api-client";
+import { AddEntryDialog } from "@/components/timesheets/add-entry-dialog";
 
 type Task = {
   id: string;
+  date: string;
   description: string;
   project: string;
   hours: number;
@@ -26,6 +29,7 @@ type FormState = {
   project: string;
   hours: number | "";
   dayId: string;
+  date?: string;
 };
 
 function ProgressBar({ value, max }: { value: number; max: number }) {
@@ -130,60 +134,18 @@ function Modal({
 }
 
 export function WeekTimesheet() {
-  const [days, setDays] = useState<DayEntry[]>([
-    {
-      id: "jan21",
-      dateLabel: "Jan 21",
-      tasks: [
-        {
-          id: "t1",
-          description: "Homepage Development",
-          project: "Project Name",
-          hours: 4,
-        },
-        {
-          id: "t2",
-          description: "Homepage Development",
-          project: "Project Name",
-          hours: 4,
-        },
-      ],
-    },
-    {
-      id: "jan22",
-      dateLabel: "Jan 22",
-      tasks: [
-        {
-          id: "t3",
-          description: "Homepage Development",
-          project: "Project Name",
-          hours: 4,
-        },
-        {
-          id: "t4",
-          description: "Homepage Development",
-          project: "Project Name",
-          hours: 4,
-        },
-        {
-          id: "t5",
-          description: "Homepage Development",
-          project: "Project Name",
-          hours: 4,
-        },
-      ],
-    },
-    { id: "jan23", dateLabel: "Jan 23", tasks: [] },
-    { id: "jan24", dateLabel: "Jan 24", tasks: [] },
-    { id: "jan25", dateLabel: "Jan 25", tasks: [] },
-  ]);
+  const [days, setDays] = useState<DayEntry[]>([]);
+  const [timesheetRange, setTimesheetRange] = useState("21 - 26 January, 2024");
+  const [timesheetId] = useState("4");
+  const [showAddDialog, setShowAddDialog] = useState(false);
+  const [selectedDayId, setSelectedDayId] = useState<string | null>(null);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [form, setForm] = useState<FormState>({
     description: "",
     project: "Project Name",
     hours: "",
-    dayId: "jan21",
+    dayId: "",
   });
 
   const [error, setError] = useState<string | null>(null);
@@ -197,21 +159,70 @@ export function WeekTimesheet() {
     [days],
   );
 
+  const buildDays = (startDate: string, endDate: string, tasks: Task[]) => {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const result: DayEntry[] = [];
+    for (
+      let dt = new Date(start);
+      dt.getTime() <= end.getTime();
+      dt.setDate(dt.getDate() + 1)
+    ) {
+      const iso = dt.toISOString().slice(0, 10);
+      const label = dt.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+      });
+      result.push({
+        id: iso,
+        dateLabel: label,
+        tasks: tasks.filter((t) => t.date === iso),
+      });
+    }
+    setDays(result);
+  };
+
+  const loadData = async () => {
+    try {
+      const sheet = await apiFetch<{
+        data: { startDate: string; endDate: string };
+      }>(`/api/timesheets/${timesheetId}`);
+      const entries = await apiFetch<{ data: Task[] }>(
+        `/api/timesheets/${timesheetId}/entries`,
+      );
+      const startDate = sheet.data.startDate;
+      const endDate = sheet.data.endDate;
+      buildDays(startDate, endDate, entries.data);
+      const startLabel = new Date(startDate).toLocaleDateString("en-US", {
+        day: "numeric",
+        month: "long",
+      });
+      const endLabel = new Date(endDate).toLocaleDateString("en-US", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      });
+      setTimesheetRange(`${startLabel} - ${endLabel}`);
+    } catch {
+      // ignore errors for mock data
+    }
+  };
+
+  useEffect(() => {
+    loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const openCreate = (dayId: string) => {
-    setError(null);
-    setForm({
-      description: "",
-      project: "Project Name",
-      hours: "",
-      dayId,
-    });
-    setModalOpen(true);
+    setSelectedDayId(dayId);
+    setShowAddDialog(true);
   };
 
   const openEdit = (dayId: string, task: Task) => {
     setError(null);
     setForm({
       id: task.id,
+      date: task.date,
       description: task.description,
       project: task.project,
       hours: task.hours,
@@ -220,7 +231,7 @@ export function WeekTimesheet() {
     setModalOpen(true);
   };
 
-  const upsertTask = () => {
+  const upsertTask = async () => {
     if (!form.description.trim()) {
       setError("Description is required.");
       return;
@@ -234,45 +245,50 @@ export function WeekTimesheet() {
       return;
     }
 
-    setDays((prev) =>
-      prev.map((day) => {
-        if (day.id !== form.dayId) return day;
-        if (form.id) {
-          return {
-            ...day,
-            tasks: day.tasks.map((t) =>
-              t.id === form.id
-                ? {
-                    ...t,
-                    description: form.description,
-                    project: form.project,
-                    hours: Number(form.hours),
-                  }
-                : t,
-            ),
-          };
-        }
-        const newTask: Task = {
-          id: crypto.randomUUID(),
-          description: form.description,
-          project: form.project,
-          hours: Number(form.hours),
-        };
-        return { ...day, tasks: [...day.tasks, newTask] };
-      }),
-    );
-
-    setModalOpen(false);
+    try {
+      if (form.id) {
+        await apiFetch(`/api/timesheets/${timesheetId}/entries/${form.id}`, {
+          method: "PUT",
+          body: JSON.stringify({
+            date: form.date ?? form.dayId,
+            description: form.description,
+            project: form.project,
+            hours: Number(form.hours),
+          }),
+        });
+      } else {
+        await apiFetch(`/api/timesheets/${timesheetId}/entries`, {
+          method: "POST",
+          body: JSON.stringify({
+            date: form.dayId,
+            description: form.description,
+            project: form.project,
+            hours: Number(form.hours),
+          }),
+        });
+      }
+      await loadData();
+      setModalOpen(false);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Unable to save entry right now.",
+      );
+    }
   };
 
-  const deleteTask = (dayId: string, taskId: string) => {
-    setDays((prev) =>
-      prev.map((day) =>
-        day.id === dayId
-          ? { ...day, tasks: day.tasks.filter((t) => t.id !== taskId) }
-          : day,
-      ),
-    );
+  const deleteTask = async (_dayId: string, taskId: string) => {
+    try {
+      await apiFetch(`/api/timesheets/${timesheetId}/entries/${taskId}`, {
+        method: "DELETE",
+      });
+      await loadData();
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Unable to delete entry right now.",
+      );
+    }
   };
 
   return (
@@ -296,7 +312,7 @@ export function WeekTimesheet() {
               <h1 className="text-lg font-semibold text-[#0f1729]">
                 This week’s timesheet
               </h1>
-              <p className="text-xs text-[#6b7280]">21 - 26 January, 2024</p>
+              <p className="text-xs text-[#6b7280]">{timesheetRange}</p>
             </div>
             <ProgressBar value={totalHours} max={40} />
           </div>
@@ -369,7 +385,10 @@ export function WeekTimesheet() {
               max={24}
               value={form.hours}
               onChange={(e) =>
-                setForm((prev) => ({ ...prev, hours: Number(e.target.value) }))
+                setForm((prev) => ({
+                  ...prev,
+                  hours: Number(e.target.value),
+                }))
               }
             />
           </div>
@@ -388,6 +407,13 @@ export function WeekTimesheet() {
           </div>
         </div>
       </Modal>
+      <AddEntryDialog
+        open={showAddDialog}
+        onClose={() => setShowAddDialog(false)}
+        onSaved={loadData}
+        timesheetId={timesheetId}
+        dayId={selectedDayId ?? ""}
+      />
     </div>
   );
 }

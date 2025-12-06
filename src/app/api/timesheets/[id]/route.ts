@@ -20,6 +20,17 @@ function validatePayload(body: Payload) {
   return errors;
 }
 
+export async function GET(
+  _request: Request,
+  { params }: { params: { id: string } },
+) {
+  const sheet = getTimesheet(params.id);
+  if (!sheet) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+  return NextResponse.json({ data: sheet });
+}
+
 export async function PUT(
   request: Request,
   { params }: { params: { id: string } },

@@ -1,3 +1,5 @@
+import { mockTimesheets } from "@/lib/mock-data";
+
 export type TimesheetStatus = "COMPLETED" | "INCOMPLETE" | "MISSING";
 
 export type Timesheet = {
@@ -16,48 +18,10 @@ type UpsertPayload = {
   hours: number;
 };
 
-const store: Timesheet[] = [
-  {
-    id: "1",
-    week: 1,
-    startDate: "2024-01-01",
-    endDate: "2024-01-05",
-    hours: 40,
-    status: "COMPLETED",
-  },
-  {
-    id: "2",
-    week: 2,
-    startDate: "2024-01-08",
-    endDate: "2024-01-12",
-    hours: 40,
-    status: "COMPLETED",
-  },
-  {
-    id: "3",
-    week: 3,
-    startDate: "2024-01-15",
-    endDate: "2024-01-19",
-    hours: 18,
-    status: "INCOMPLETE",
-  },
-  {
-    id: "4",
-    week: 4,
-    startDate: "2024-01-22",
-    endDate: "2024-01-26",
-    hours: 40,
-    status: "COMPLETED",
-  },
-  {
-    id: "5",
-    week: 5,
-    startDate: "2024-01-28",
-    endDate: "2024-02-01",
-    hours: 0,
-    status: "MISSING",
-  },
-];
+const store: Timesheet[] = mockTimesheets.map((t) => ({
+  ...t,
+  status: computeStatus(t.hours),
+}));
 
 export function computeStatus(hours: number): TimesheetStatus {
   if (hours >= 40) return "COMPLETED";
