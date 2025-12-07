@@ -1,17 +1,22 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { format } from "date-fns";
 import { type DateRange } from "react-day-picker";
 import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 
 import { StatusBadge } from "@/components/timesheets/status-badge";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
-import { apiFetch } from "@/lib/api-client";
-import type { Timesheet, TimesheetStatus } from "@/lib/timesheets";
+import type { TimesheetStatus } from "@/lib/timesheets";
 import { cn } from "@/lib/utils";
+import {
+  useCreateTimesheet,
+  useTimesheetsQuery,
+  useUpdateTimesheet,
+} from "@/hooks/use-timesheets";
 
 type FormState = {
   week: number | "";
@@ -86,10 +91,6 @@ function Modal({
 }
 
 export function TimesheetDashboard() {
-  const [timesheets, setTimesheets] = useState<Timesheet[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [statusFilter, setStatusFilter] = useState<TimesheetStatus | "ALL">(
@@ -112,35 +113,22 @@ export function TimesheetDashboard() {
     hours: "",
   });
   const [formError, setFormError] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
   const router = useRouter();
+  const queryClient = useQueryClient();
 
-  const fetchTimesheets = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const params = new URLSearchParams();
-      if (startDate) params.append("startDate", startDate);
-      if (endDate) params.append("endDate", endDate);
-      if (statusFilter !== "ALL") params.append("status", statusFilter);
-      const query = params.toString() ? `?${params.toString()}` : "";
-      const res = await apiFetch<{ data: Timesheet[] }>(
-        `/api/timesheets${query}`,
-      );
-      setTimesheets(res.data);
-      setPage(1);
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Unable to load timesheets.",
-      );
-    } finally {
-      setLoading(false);
-    }
-  }, [endDate, startDate, statusFilter]);
-
-  useEffect(() => {
-    fetchTimesheets();
-  }, [fetchTimesheets]);
+  const {
+    data: timesheets = [],
+    isPending,
+    isError,
+    error,
+  } = useTimesheetsQuery({
+    startDate,
+    endDate,
+    status: statusFilter,
+  });
+  const createMutation = useCreateTimesheet();
+  const updateMutation = useUpdateTimesheet();
+  const saving = createMutation.isPending || updateMutation.isPending;
 
   const handleSave = async () => {
     if (modalMode === "view") {
@@ -164,38 +152,30 @@ export function TimesheetDashboard() {
       return;
     }
 
-    setSaving(true);
     setFormError(null);
     try {
       if (modalMode === "create") {
-        await apiFetch("/api/timesheets", {
-          method: "POST",
-          body: JSON.stringify({
-            week: Number(form.week),
-            startDate: form.startDate,
-            endDate: form.endDate,
-            hours: Number(form.hours),
-          }),
+        await createMutation.mutateAsync({
+          week: Number(form.week),
+          startDate: form.startDate,
+          endDate: form.endDate,
+          hours: Number(form.hours),
         });
       } else if (modalMode === "update" && activeId) {
-        await apiFetch(`/api/timesheets/${activeId}`, {
-          method: "PUT",
-          body: JSON.stringify({
-            week: Number(form.week),
-            startDate: form.startDate,
-            endDate: form.endDate,
-            hours: Number(form.hours),
-          }),
+        await updateMutation.mutateAsync({
+          id: activeId,
+          week: Number(form.week),
+          startDate: form.startDate,
+          endDate: form.endDate,
+          hours: Number(form.hours),
         });
       }
-      await fetchTimesheets();
+      await queryClient.invalidateQueries({ queryKey: ["timesheets"] });
       setModalOpen(false);
     } catch (err) {
       setFormError(
         err instanceof Error ? err.message : "Unable to save timesheet.",
       );
-    } finally {
-      setSaving(false);
     }
   };
 
@@ -253,7 +233,7 @@ export function TimesheetDashboard() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <header className="bg-surface border-b border-border">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+        <div className="mx-auto flex items-center justify-between px-6 py-4">
           <div className="flex items-center gap-6">
             <span className="text-xl font-semibold tracking-tight text-foreground">
               ticktock
@@ -308,7 +288,7 @@ export function TimesheetDashboard() {
                         setStartDate("");
                         setEndDate("");
                         setShowRangePicker(false);
-                        fetchTimesheets();
+                        setPage(1);
                       }}
                     >
                       Clear
@@ -320,10 +300,12 @@ export function TimesheetDashboard() {
                           setStartDate(
                             dateRange.from.toISOString().slice(0, 10),
                           );
+                        else setStartDate("");
                         if (dateRange?.to)
                           setEndDate(dateRange.to.toISOString().slice(0, 10));
+                        else setEndDate("");
                         setShowRangePicker(false);
-                        fetchTimesheets();
+                        setPage(1);
                       }}
                     >
                       Apply
@@ -361,6 +343,7 @@ export function TimesheetDashboard() {
                       onClick={() => {
                         setStatusFilter(opt.value as TimesheetStatus | "ALL");
                         setShowStatusMenu(false);
+                        setPage(1);
                       }}
                       className="hover:bg-surface-muted flex w-full items-center justify-between px-3 py-2 text-left text-sm"
                     >
@@ -418,27 +401,36 @@ export function TimesheetDashboard() {
                   </tr>
                 </thead>
                 <tbody className="bg-surface divide-y divide-border text-sm">
-                  {loading && (
-                    <tr>
-                      <td
-                        colSpan={4}
-                        className="px-4 py-6 text-center text-muted-foreground"
-                      >
-                        Loading timesheets...
-                      </td>
-                    </tr>
-                  )}
-                  {!loading && error && (
+                  {isPending &&
+                    [...Array(pageSize)].map((_, idx) => (
+                      <tr key={`skeleton-${idx}`}>
+                        <td className="bg-muted/60 px-4 py-4">
+                          <div className="h-4 w-10 animate-pulse rounded bg-muted" />
+                        </td>
+                        <td className="px-4 py-4">
+                          <div className="h-4 w-40 animate-pulse rounded bg-muted" />
+                        </td>
+                        <td className="px-4 py-4">
+                          <div className="h-5 w-24 animate-pulse rounded bg-muted" />
+                        </td>
+                        <td className="px-4 py-4">
+                          <div className="h-4 w-16 animate-pulse rounded bg-muted" />
+                        </td>
+                      </tr>
+                    ))}
+                  {!isPending && isError && (
                     <tr>
                       <td
                         colSpan={4}
                         className="px-4 py-6 text-center text-destructive"
                       >
-                        {error}
+                        {error instanceof Error
+                          ? error.message
+                          : "Unable to load timesheets."}
                       </td>
                     </tr>
                   )}
-                  {!loading && !error && timesheets.length === 0 && (
+                  {!isPending && !isError && timesheets.length === 0 && (
                     <tr>
                       <td
                         colSpan={4}
@@ -448,8 +440,8 @@ export function TimesheetDashboard() {
                       </td>
                     </tr>
                   )}
-                  {!loading &&
-                    !error &&
+                  {!isPending &&
+                    !isError &&
                     paginated.map((sheet) => (
                       <tr key={sheet.id} className="hover:bg-primary/5">
                         <td className="bg-muted/60 px-4 py-4 text-foreground">

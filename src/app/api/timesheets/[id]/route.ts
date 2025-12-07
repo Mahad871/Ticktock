@@ -1,29 +1,18 @@
 import { NextResponse } from "next/server";
 
+import { auth } from "@/auth";
+import { TimesheetPayloadSchema } from "@/lib/schemas";
 import { getTimesheet, updateTimesheet } from "@/lib/timesheets";
-
-type Payload = {
-  week?: unknown;
-  startDate?: unknown;
-  endDate?: unknown;
-  hours?: unknown;
-};
-
-function validatePayload(body: Payload) {
-  const errors: string[] = [];
-  if (typeof body?.week !== "number") errors.push("week is required");
-  if (typeof body?.startDate !== "string") errors.push("startDate is required");
-  if (typeof body?.endDate !== "string") errors.push("endDate is required");
-  if (typeof body?.hours !== "number" || Number.isNaN(body.hours)) {
-    errors.push("hours must be a number");
-  }
-  return errors;
-}
 
 export async function GET(
   _request: Request,
   { params }: { params: { id: string } },
 ) {
+  const session = await auth();
+  if (!session?.user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const sheet = getTimesheet(params.id);
   if (!sheet) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -35,26 +24,25 @@ export async function PUT(
   request: Request,
   { params }: { params: { id: string } },
 ) {
+  const session = await auth();
+  if (!session?.user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const existing = getTimesheet(params.id);
   if (!existing) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  const body = await request.json();
-  const errors = validatePayload(body);
-  if (errors.length > 0) {
+  const json = await request.json();
+  const parsed = TimesheetPayloadSchema.safeParse(json);
+  if (!parsed.success) {
     return NextResponse.json(
-      { error: "Invalid payload", details: errors },
+      { error: "Invalid payload", details: parsed.error.flatten().fieldErrors },
       { status: 400 },
     );
   }
 
-  const updated = updateTimesheet(params.id, {
-    week: body.week,
-    startDate: body.startDate,
-    endDate: body.endDate,
-    hours: body.hours,
-  });
-
+  const updated = updateTimesheet(params.id, parsed.data);
   return NextResponse.json({ data: updated });
 }

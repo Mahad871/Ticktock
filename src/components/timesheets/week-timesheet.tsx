@@ -1,13 +1,21 @@
 "use client";
+/* eslint-disable @next/next/no-inline-styles, react-native/no-inline-styles */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { MoreHorizontal, Plus } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { apiFetch } from "@/lib/api-client";
 import { AddEntryDialog } from "@/components/timesheets/add-entry-dialog";
+import {
+  useCreateEntry,
+  useDeleteEntry,
+  useTimesheetDetail,
+  useTimesheetEntries,
+  useUpdateEntry,
+} from "@/hooks/use-timesheet-entries";
 
 type Task = {
   id: string;
@@ -45,6 +53,7 @@ function ProgressBar({ value, max }: { value: number; max: number }) {
       </div>
       <div className="w-36">
         <div className="relative h-1.5 rounded-full bg-border">
+          {/* dynamic width for progress bar */}
           <div
             className="absolute left-0 top-0 h-1.5 rounded-full bg-primary"
             style={{ width: `${pct}%` }}
@@ -172,7 +181,6 @@ function Modal({
 }
 
 export function WeekTimesheet({ timesheetId = "4" }: WeekTimesheetProps) {
-  const [days, setDays] = useState<DayEntry[]>([]);
   const [timesheetRange, setTimesheetRange] = useState("21 - 26 January, 2024");
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [selectedDayId, setSelectedDayId] = useState<string | null>(null);
@@ -186,19 +194,26 @@ export function WeekTimesheet({ timesheetId = "4" }: WeekTimesheetProps) {
   });
 
   const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
-  const totalHours = useMemo(
-    () =>
-      days.reduce(
-        (sum, day) => sum + day.tasks.reduce((s, t) => s + t.hours, 0),
-        0,
-      ),
-    [days],
-  );
+  const {
+    data: sheet,
+    isPending: sheetPending,
+    isError: sheetError,
+  } = useTimesheetDetail(timesheetId);
+  const {
+    data: entries = [],
+    isPending: entriesPending,
+    isError: entriesError,
+  } = useTimesheetEntries(timesheetId);
+  const createEntry = useCreateEntry(timesheetId);
+  const updateEntry = useUpdateEntry(timesheetId);
+  const deleteEntryMutation = useDeleteEntry(timesheetId);
 
-  const buildDays = (startDate: string, endDate: string, tasks: Task[]) => {
-    const start = new Date(startDate);
-    const end = new Date(endDate);
+  const days: DayEntry[] = useMemo(() => {
+    if (!sheet) return [];
+    const start = new Date(sheet.startDate);
+    const end = new Date(sheet.endDate);
     const result: DayEntry[] = [];
     for (
       let dt = new Date(start);
@@ -213,41 +228,34 @@ export function WeekTimesheet({ timesheetId = "4" }: WeekTimesheetProps) {
       result.push({
         id: iso,
         dateLabel: label,
-        tasks: tasks.filter((t) => t.date === iso),
+        tasks: entries.filter((t) => t.date === iso),
       });
     }
-    setDays(result);
-  };
+    return result;
+  }, [entries, sheet]);
 
-  const loadData = useCallback(async () => {
-    try {
-      const sheet = await apiFetch<{
-        data: { startDate: string; endDate: string };
-      }>(`/api/timesheets/${timesheetId}`);
-      const entries = await apiFetch<{ data: Task[] }>(
-        `/api/timesheets/${timesheetId}/entries`,
-      );
-      const startDate = sheet.data.startDate;
-      const endDate = sheet.data.endDate;
-      buildDays(startDate, endDate, entries.data);
-      const startLabel = new Date(startDate).toLocaleDateString("en-US", {
-        day: "numeric",
-        month: "long",
-      });
-      const endLabel = new Date(endDate).toLocaleDateString("en-US", {
-        day: "numeric",
-        month: "long",
-        year: "numeric",
-      });
-      setTimesheetRange(`${startLabel} - ${endLabel}`);
-    } catch {
-      // ignore errors for mock data
-    }
-  }, [timesheetId]);
+  const totalHours = useMemo(
+    () =>
+      days.reduce(
+        (sum, day) => sum + day.tasks.reduce((s, t) => s + t.hours, 0),
+        0,
+      ),
+    [days],
+  );
 
   useEffect(() => {
-    loadData();
-  }, [loadData]);
+    if (!sheet) return;
+    const startLabel = new Date(sheet.startDate).toLocaleDateString("en-US", {
+      day: "numeric",
+      month: "long",
+    });
+    const endLabel = new Date(sheet.endDate).toLocaleDateString("en-US", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+    setTimesheetRange(`${startLabel} - ${endLabel}`);
+  }, [sheet]);
 
   const openCreate = (dayId: string) => {
     setSelectedDayId(dayId);
@@ -283,28 +291,23 @@ export function WeekTimesheet({ timesheetId = "4" }: WeekTimesheetProps) {
 
     try {
       if (form.id) {
-        await apiFetch(`/api/timesheets/${timesheetId}/entries/${form.id}`, {
-          method: "PUT",
-          body: JSON.stringify({
-            date: form.date ?? form.dayId,
-            description: form.description,
-            project: form.project,
-            hours: Number(form.hours),
-          }),
+        await updateEntry.mutateAsync({
+          entryId: form.id,
+          date: form.date ?? form.dayId,
+          description: form.description,
+          project: form.project,
+          hours: Number(form.hours),
         });
       } else {
-        await apiFetch(`/api/timesheets/${timesheetId}/entries`, {
-          method: "POST",
-          body: JSON.stringify({
-            date: form.dayId,
-            description: form.description,
-            project: form.project,
-            hours: Number(form.hours),
-          }),
+        await createEntry.mutateAsync({
+          date: form.dayId,
+          description: form.description,
+          project: form.project,
+          hours: Number(form.hours),
         });
       }
-      await loadData();
       setModalOpen(false);
+      queryClient.invalidateQueries({ queryKey: ["timesheet", timesheetId] });
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Unable to save entry right now.",
@@ -314,10 +317,8 @@ export function WeekTimesheet({ timesheetId = "4" }: WeekTimesheetProps) {
 
   const deleteTask = async (_dayId: string, taskId: string) => {
     try {
-      await apiFetch(`/api/timesheets/${timesheetId}/entries/${taskId}`, {
-        method: "DELETE",
-      });
-      await loadData();
+      await deleteEntryMutation.mutateAsync(taskId);
+      queryClient.invalidateQueries({ queryKey: ["timesheet", timesheetId] });
     } catch (err) {
       setError(
         err instanceof Error
@@ -350,30 +351,69 @@ export function WeekTimesheet({ timesheetId = "4" }: WeekTimesheetProps) {
               <h1 className="text-lg font-semibold text-foreground">
                 This week’s timesheet
               </h1>
-              <p className="text-xs text-muted-foreground">{timesheetRange}</p>
+              <p className="text-xs text-muted-foreground">
+                {sheetPending ? "Loading..." : timesheetRange}
+              </p>
             </div>
             <ProgressBar value={totalHours} max={40} />
           </div>
 
           <div className="space-y-6 px-6 py-6">
-            {days.map((day) => (
-              <div key={day.id} className="space-y-3">
-                <div className="text-sm font-semibold text-foreground">
-                  {day.dateLabel}
-                </div>
-
-                {day.tasks.map((task) => (
-                  <TaskRow
-                    key={task.id}
-                    task={task}
-                    onEdit={() => openEdit(day.id, task)}
-                    onDelete={() => deleteTask(day.id, task.id)}
-                  />
+            {(sheetPending || entriesPending) && (
+              <>
+                {[...Array(5)].map((_, idx) => (
+                  <div key={`skeleton-day-${idx}`} className="space-y-3">
+                    <div className="h-4 w-24 animate-pulse rounded bg-muted" />
+                    {[...Array(2)].map((__, jdx) => (
+                      <div
+                        key={`row-${idx}-${jdx}`}
+                        className="border-border-strong bg-surface flex items-center gap-3 rounded-md border border-dashed px-3 py-4"
+                      >
+                        <div className="h-4 w-32 animate-pulse rounded bg-muted" />
+                      </div>
+                    ))}
+                    <div className="border-border-strong h-10 w-full animate-pulse rounded-md border border-dashed bg-muted" />
+                  </div>
                 ))}
+              </>
+            )}
 
-                <AddTaskRow onAdd={() => openCreate(day.id)} />
+            {!sheetPending &&
+              !entriesPending &&
+              days.map((day) => (
+                <div key={day.id} className="space-y-3">
+                  <div className="text-sm font-semibold text-foreground">
+                    {day.dateLabel}
+                  </div>
+
+                  {day.tasks.map((task) => (
+                    <TaskRow
+                      key={task.id}
+                      task={task}
+                      onEdit={() => openEdit(day.id, task)}
+                      onDelete={() => deleteTask(day.id, task.id)}
+                    />
+                  ))}
+
+                  <AddTaskRow onAdd={() => openCreate(day.id)} />
+                </div>
+              ))}
+
+            {!sheetPending &&
+              !entriesPending &&
+              !sheetError &&
+              !entriesError &&
+              days.length === 0 && (
+                <div className="bg-surface-muted rounded-md border border-border px-4 py-6 text-center text-sm text-muted-foreground">
+                  No entries yet for this timesheet.
+                </div>
+              )}
+
+            {(sheetError || entriesError) && (
+              <div className="rounded-md border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+                Unable to load this week’s timesheet.
               </div>
-            ))}
+            )}
           </div>
         </div>
 
@@ -448,7 +488,14 @@ export function WeekTimesheet({ timesheetId = "4" }: WeekTimesheetProps) {
       <AddEntryDialog
         open={showAddDialog}
         onClose={() => setShowAddDialog(false)}
-        onSaved={loadData}
+        onSaved={() => {
+          queryClient.invalidateQueries({
+            queryKey: ["timesheet", timesheetId],
+          });
+          queryClient.invalidateQueries({
+            queryKey: ["timesheet", timesheetId, "entries"],
+          });
+        }}
         timesheetId={timesheetId}
         dayId={selectedDayId ?? ""}
       />
