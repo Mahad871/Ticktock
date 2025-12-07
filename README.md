@@ -28,6 +28,7 @@ NEXTAUTH_URL=http://localhost:3000
 
 - Sign in with any email and the password `password`.
 - Protected route: `/dashboard` is guarded by NextAuth middleware.
+- “Remember me” on the sign-in form controls session lifetime: checked = 30 days, unchecked = 12 hours (JWT exp set accordingly).
 
 ## shadcn/ui
 
