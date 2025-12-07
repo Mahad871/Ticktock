@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -37,6 +37,7 @@ export function AddEntryDialog({
   const [hours, setHours] = useState(12);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const descriptionRef = useRef<HTMLTextAreaElement | null>(null);
 
   useEffect(() => {
     if (!open) {
@@ -46,8 +47,18 @@ export function AddEntryDialog({
       setNote("");
       setHours(12);
       setError(null);
+    } else {
+      descriptionRef.current?.focus();
+      const handleKey = (evt: KeyboardEvent) => {
+        if (evt.key === "Escape") {
+          evt.stopPropagation();
+          onClose();
+        }
+      };
+      document.addEventListener("keydown", handleKey);
+      return () => document.removeEventListener("keydown", handleKey);
     }
-  }, [open]);
+  }, [open, onClose]);
 
   const handleSave = async () => {
     setSaving(true);
@@ -76,8 +87,19 @@ export function AddEntryDialog({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4">
-      <div className="bg-surface w-full max-w-3xl rounded-md border border-border shadow-2xl">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4"
+      role="presentation"
+      onClick={(evt) => {
+        if (evt.target === evt.currentTarget) onClose();
+      }}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Add entry"
+        className="bg-surface w-full max-w-3xl rounded-md border border-border shadow-2xl outline-none"
+      >
         <div className="flex items-center justify-between border-b border-border px-6 py-4">
           <h2 className="text-lg font-semibold text-foreground">
             Add New Entry
@@ -137,6 +159,7 @@ export function AddEntryDialog({
               placeholder="Write text here ..."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
+              ref={descriptionRef}
               className="min-h-[140px]"
             />
             <div className="text-xs text-muted-foreground">

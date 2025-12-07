@@ -1,12 +1,12 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { format } from "date-fns";
 import { type DateRange } from "react-day-picker";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
-import { signOut, useSession } from "next-auth/react";
 
+import { AppShell } from "@/components/layout/app-shell";
 import { StatusBadge } from "@/components/timesheets/status-badge";
 import { TimesheetForm } from "@/components/timesheets/timesheet-form";
 import { Button } from "@/components/ui/button";
@@ -72,10 +72,40 @@ function Modal({
   children: React.ReactNode;
   onClose: () => void;
 }) {
+  const dialogRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const firstFocusable = dialogRef.current?.querySelector<HTMLElement>(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+    );
+    firstFocusable?.focus();
+    const handleKey = (evt: KeyboardEvent) => {
+      if (evt.key === "Escape") {
+        evt.stopPropagation();
+        onClose();
+      }
+    };
+    document.addEventListener("keydown", handleKey);
+    return () => document.removeEventListener("keydown", handleKey);
+  }, [open, onClose]);
+
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-      <div className="bg-surface w-full max-w-lg rounded-xl border border-border shadow-2xl">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4"
+      role="presentation"
+      onClick={(evt) => {
+        if (evt.target === evt.currentTarget) onClose();
+      }}
+    >
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
+        className="bg-surface w-full max-w-lg rounded-xl border border-border shadow-2xl outline-none"
+      >
         <div className="flex items-center justify-between border-b border-border px-5 py-4">
           <h3 className="text-lg font-semibold text-foreground">{title}</h3>
           <button
@@ -117,8 +147,6 @@ export function TimesheetDashboard() {
   const [formError, setFormError] = useState<string | null>(null);
   const router = useRouter();
   const queryClient = useQueryClient();
-  const { data: session, status: sessionStatus } = useSession();
-  const [showUserMenu, setShowUserMenu] = useState(false);
 
   const {
     data: timesheets = [],
@@ -207,147 +235,278 @@ export function TimesheetDashboard() {
   }, [page, totalPages]);
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <header className="bg-surface border-b border-border">
-        <div className="mx-auto flex items-center justify-between px-6 py-4">
-          <div className="flex items-center gap-6">
-            <span className="text-2xl font-semibold tracking-tight text-foreground">
-              ticktock
-            </span>
-            <nav className="text-sm font-medium text-foreground">
-              Timesheets
-            </nav>
-          </div>
+    <AppShell>
+      <div className="bg-surface rounded-xl border border-border shadow-sm">
+        <div className="flex flex-wrap items-center gap-4 px-8 py-6">
+          <h1 className="text-2xl font-semibold text-foreground">
+            Your Timesheets
+          </h1>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-4 px-8 pb-5">
           <div className="relative">
             <button
-              onClick={() => setShowUserMenu((v) => !v)}
-              className="text-sm font-medium text-muted-foreground hover:text-primary"
+              onClick={() => setShowRangePicker((v) => !v)}
+              aria-haspopup="dialog"
+              className="border-border-strong bg-surface flex h-10 items-center gap-2 rounded-md border px-3 text-sm text-foreground shadow-sm"
+              onKeyDown={(e) => {
+                if (e.key === "Escape") {
+                  e.stopPropagation();
+                  setShowRangePicker(false);
+                }
+              }}
             >
-              {sessionStatus === "loading"
-                ? "Loading..."
-                : session?.user?.name || session?.user?.email || "User"}{" "}
-              ▾
+              {dateRange?.from && dateRange?.to
+                ? `${format(dateRange.from, "d MMM, yyyy")} - ${format(
+                    dateRange.to,
+                    "d MMM, yyyy",
+                  )}`
+                : "Date Range"}
+              <span className="text-muted-foreground">▾</span>
             </button>
-            {showUserMenu && (
-              <div className="bg-surface absolute right-0 mt-2 w-40 rounded-md border border-border shadow-lg">
-                <button
-                  className="hover:bg-surface-muted flex w-full items-center px-3 py-2 text-left text-sm"
-                  onClick={() => {
-                    setShowUserMenu(false);
-                    signOut({ callbackUrl: "/" });
+            {showRangePicker && (
+              <div className="bg-surface absolute z-20 mt-2 rounded-lg border border-border p-3 shadow-lg">
+                <Calendar
+                  mode="range"
+                  defaultMonth={dateRange?.from}
+                  selected={dateRange}
+                  onSelect={(range) => {
+                    setDateRange(range);
                   }}
-                >
-                  Sign out
-                </button>
+                  numberOfMonths={2}
+                  className="bg-surface rounded-lg border shadow-sm"
+                />
+                <div className="flex justify-end gap-2 pt-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setDateRange(undefined);
+                      setStartDate("");
+                      setEndDate("");
+                      setShowRangePicker(false);
+                      setPage(1);
+                    }}
+                  >
+                    Clear
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      if (dateRange?.from)
+                        setStartDate(dateRange.from.toISOString().slice(0, 10));
+                      else setStartDate("");
+                      if (dateRange?.to)
+                        setEndDate(dateRange.to.toISOString().slice(0, 10));
+                      else setEndDate("");
+                      setShowRangePicker(false);
+                      setPage(1);
+                    }}
+                  >
+                    Apply
+                  </Button>
+                </div>
               </div>
             )}
           </div>
-        </div>
-      </header>
-      <main className="mx-auto max-w-6xl px-6 py-10">
-        <div className="bg-surface rounded-xl border border-border shadow-sm">
-          <div className="flex flex-wrap items-center gap-4 px-8 py-6">
-            <h1 className="text-2xl font-semibold text-foreground">
-              Your Timesheets
-            </h1>
+
+          <div className="relative">
+            <button
+              title="Status"
+              onClick={() => setShowStatusMenu((v) => !v)}
+              aria-haspopup="menu"
+              className="border-border-strong bg-surface flex h-10 items-center gap-2 rounded-md border px-3 text-sm text-foreground shadow-sm"
+              onKeyDown={(e) => {
+                if (e.key === "Escape") {
+                  e.stopPropagation();
+                  setShowStatusMenu(false);
+                }
+              }}
+            >
+              {statusFilter === "ALL"
+                ? "Status"
+                : statusFilter === "COMPLETED"
+                  ? "Completed"
+                  : statusFilter === "INCOMPLETE"
+                    ? "Incomplete"
+                    : "Missing"}
+              <span className="text-muted-foreground">▾</span>
+            </button>
+            {showStatusMenu && (
+              <div
+                className="bg-surface absolute z-20 mt-1 w-40 rounded-md border border-border shadow-lg"
+                role="menu"
+              >
+                {[
+                  { label: "Status", value: "ALL" },
+                  { label: "Completed", value: "COMPLETED" },
+                  { label: "Incomplete", value: "INCOMPLETE" },
+                  { label: "Missing", value: "MISSING" },
+                ].map((opt) => (
+                  <button
+                    role="menuitem"
+                    key={opt.value}
+                    onClick={() => {
+                      setStatusFilter(opt.value as TimesheetStatus | "ALL");
+                      setShowStatusMenu(false);
+                      setPage(1);
+                    }}
+                    className="hover:bg-surface-muted flex w-full items-center justify-between px-3 py-2 text-left text-sm"
+                  >
+                    {opt.label}
+                    {statusFilter === opt.value && (
+                      <span className="text-primary">•</span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
-          <div className="flex flex-wrap items-center gap-4 px-8 pb-5">
-            <div className="relative">
-              <button
-                onClick={() => setShowRangePicker((v) => !v)}
-                className="border-border-strong bg-surface flex h-10 items-center gap-2 rounded-md border px-3 text-sm text-foreground shadow-sm"
-              >
-                {dateRange?.from && dateRange?.to
-                  ? `${format(dateRange.from, "d MMM, yyyy")} - ${format(
-                      dateRange.to,
-                      "d MMM, yyyy",
-                    )}`
-                  : "Date Range"}
-                <span className="text-muted-foreground">▾</span>
-              </button>
-              {showRangePicker && (
-                <div className="bg-surface absolute z-20 mt-2 rounded-lg border border-border p-3 shadow-lg">
-                  <Calendar
-                    mode="range"
-                    defaultMonth={dateRange?.from}
-                    selected={dateRange}
-                    onSelect={(range) => {
-                      setDateRange(range);
-                    }}
-                    numberOfMonths={2}
-                    className="bg-surface rounded-lg border shadow-sm"
-                  />
-                  <div className="flex justify-end gap-2 pt-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        setDateRange(undefined);
-                        setStartDate("");
-                        setEndDate("");
-                        setShowRangePicker(false);
-                        setPage(1);
-                      }}
-                    >
-                      Clear
-                    </Button>
-                    <Button
-                      size="sm"
-                      onClick={() => {
-                        if (dateRange?.from)
-                          setStartDate(
-                            dateRange.from.toISOString().slice(0, 10),
-                          );
-                        else setStartDate("");
-                        if (dateRange?.to)
-                          setEndDate(dateRange.to.toISOString().slice(0, 10));
-                        else setEndDate("");
-                        setShowRangePicker(false);
-                        setPage(1);
-                      }}
-                    >
-                      Apply
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </div>
+          {hasFilters && (
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setDateRange(undefined);
+                setStartDate("");
+                setEndDate("");
+                setStatusFilter("ALL");
+                setShowRangePicker(false);
+                setShowStatusMenu(false);
+              }}
+              className="h-10"
+            >
+              Clear filters
+            </Button>
+          )}
+        </div>
 
+        <div className="px-8 pb-6">
+          <div className="overflow-x-auto">
+            <div className="min-w-[640px] overflow-hidden rounded-lg border border-border">
+              <table className="bg-surface min-w-full divide-y divide-border text-sm">
+                <thead className="bg-muted/70 text-xs font-semibold uppercase text-muted-foreground">
+                  <tr>
+                    <th className="px-4 py-3 text-left">
+                      <span className="inline-flex items-center gap-1">
+                        Week #{" "}
+                        <span className="text-muted-foreground/70">↓</span>
+                      </span>
+                    </th>
+                    <th className="px-4 py-3 text-left">
+                      <span className="inline-flex items-center gap-1">
+                        Date <span className="text-muted-foreground/70">↓</span>
+                      </span>
+                    </th>
+                    <th className="px-4 py-3 text-left">
+                      <span className="inline-flex items-center gap-1">
+                        Status{" "}
+                        <span className="text-muted-foreground/70">↓</span>
+                      </span>
+                    </th>
+                    <th className="px-4 py-3 text-left">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-surface divide-y divide-border text-sm">
+                  {isPending &&
+                    [...Array(pageSize)].map((_, idx) => (
+                      <tr key={`skeleton-${idx}`}>
+                        <td className="bg-surface px-4 py-4">
+                          <div className="h-4 w-10 animate-pulse rounded bg-muted-foreground/20" />
+                        </td>
+                        <td className="px-4 py-4">
+                          <div className="h-4 w-40 animate-pulse rounded bg-muted-foreground/20" />
+                        </td>
+                        <td className="px-4 py-4">
+                          <div className="h-5 w-24 animate-pulse rounded bg-muted-foreground/20" />
+                        </td>
+                        <td className="px-4 py-4">
+                          <div className="h-4 w-16 animate-pulse rounded bg-muted-foreground/20" />
+                        </td>
+                      </tr>
+                    ))}
+                  {!isPending && isError && (
+                    <tr>
+                      <td
+                        colSpan={4}
+                        className="px-4 py-6 text-center text-destructive"
+                      >
+                        {error instanceof Error
+                          ? error.message
+                          : "Unable to load timesheets."}
+                      </td>
+                    </tr>
+                  )}
+                  {!isPending && !isError && timesheets.length === 0 && (
+                    <tr>
+                      <td
+                        colSpan={4}
+                        className="px-4 py-6 text-center text-muted-foreground"
+                      >
+                        No timesheets found.
+                      </td>
+                    </tr>
+                  )}
+                  {!isPending &&
+                    !isError &&
+                    paginated.map((sheet) => (
+                      <tr key={sheet.id} className="hover:bg-primary/5">
+                        <td className="bg-muted/70 px-4 py-4 text-foreground">
+                          {sheet.week}
+                        </td>
+                        <td className="bg-surface px-4 py-4 text-foreground">
+                          {formatRange(sheet.startDate, sheet.endDate)}
+                        </td>
+                        <td className="bg-surface px-4 py-4">
+                          <StatusBadge status={sheet.status} />
+                        </td>
+                        <td className="bg-surface px-4 py-4 text-primary">
+                          <ActionButton
+                            label={actionLabel(sheet.status)}
+                            onClick={() => navigateToWeekTimesheet(sheet.id)}
+                          />
+                        </td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-4 text-sm text-foreground">
             <div className="relative">
               <button
-                title="Status"
-                onClick={() => setShowStatusMenu((v) => !v)}
-                className="border-border-strong bg-surface flex h-10 items-center gap-2 rounded-md border px-3 text-sm text-foreground shadow-sm"
+                onClick={() => setShowRowsMenu((v) => !v)}
+                aria-haspopup="menu"
+                className="border-border-strong flex items-center gap-2 rounded-md border bg-muted/70 px-3 py-2 text-sm text-foreground shadow-sm"
+                onKeyDown={(e) => {
+                  if (e.key === "Escape") {
+                    e.stopPropagation();
+                    setShowRowsMenu(false);
+                  }
+                }}
               >
-                {statusFilter === "ALL"
-                  ? "Status"
-                  : statusFilter === "COMPLETED"
-                    ? "Completed"
-                    : statusFilter === "INCOMPLETE"
-                      ? "Incomplete"
-                      : "Missing"}
+                {pageSize} per page{" "}
                 <span className="text-muted-foreground">▾</span>
               </button>
-              {showStatusMenu && (
-                <div className="bg-surface absolute z-20 mt-1 w-40 rounded-md border border-border shadow-lg">
-                  {[
-                    { label: "Status", value: "ALL" },
-                    { label: "Completed", value: "COMPLETED" },
-                    { label: "Incomplete", value: "INCOMPLETE" },
-                    { label: "Missing", value: "MISSING" },
-                  ].map((opt) => (
+              {showRowsMenu && (
+                <div
+                  className="bg-surface absolute z-20 mt-1 w-32 rounded-md border border-border shadow-lg"
+                  role="menu"
+                >
+                  {[5, 10, 20].map((n) => (
                     <button
-                      key={opt.value}
+                      role="menuitem"
+                      key={n}
                       onClick={() => {
-                        setStatusFilter(opt.value as TimesheetStatus | "ALL");
-                        setShowStatusMenu(false);
+                        setPageSize(n);
                         setPage(1);
+                        setShowRowsMenu(false);
                       }}
                       className="hover:bg-surface-muted flex w-full items-center justify-between px-3 py-2 text-left text-sm"
                     >
-                      {opt.label}
-                      {statusFilter === opt.value && (
+                      {n} per page
+                      {pageSize === n && (
                         <span className="text-primary">•</span>
                       )}
                     </button>
@@ -356,203 +515,57 @@ export function TimesheetDashboard() {
               )}
             </div>
 
-            {hasFilters && (
-              <Button
-                variant="ghost"
-                onClick={() => {
-                  setDateRange(undefined);
-                  setStartDate("");
-                  setEndDate("");
-                  setStatusFilter("ALL");
-                  setShowRangePicker(false);
-                  setShowStatusMenu(false);
-                }}
-                className="h-10"
+            <div className="bg-surface flex items-center overflow-hidden rounded-md border border-border text-sm text-muted-foreground shadow-sm">
+              <button
+                onClick={() => goToPage(page - 1)}
+                disabled={page === 1}
+                className={cn(
+                  "border-r border-border px-3 py-2 text-muted-foreground hover:text-primary",
+                  "disabled:cursor-not-allowed disabled:text-muted-foreground/60",
+                )}
               >
-                Clear filters
-              </Button>
-            )}
-          </div>
-
-          <div className="px-8 pb-6">
-            <div className="overflow-x-auto">
-              <div className="min-w-[640px] overflow-hidden rounded-lg border border-border">
-                <table className="bg-surface min-w-full divide-y divide-border text-sm">
-                  <thead className="bg-muted/70 text-xs font-semibold uppercase text-muted-foreground">
-                    <tr>
-                      <th className="px-4 py-3 text-left">
-                        <span className="inline-flex items-center gap-1">
-                          Week #{" "}
-                          <span className="text-muted-foreground/70">↓</span>
-                        </span>
-                      </th>
-                      <th className="px-4 py-3 text-left">
-                        <span className="inline-flex items-center gap-1">
-                          Date{" "}
-                          <span className="text-muted-foreground/70">↓</span>
-                        </span>
-                      </th>
-                      <th className="px-4 py-3 text-left">
-                        <span className="inline-flex items-center gap-1">
-                          Status{" "}
-                          <span className="text-muted-foreground/70">↓</span>
-                        </span>
-                      </th>
-                      <th className="px-4 py-3 text-left">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-surface divide-y divide-border text-sm">
-                    {isPending &&
-                      [...Array(pageSize)].map((_, idx) => (
-                        <tr key={`skeleton-${idx}`}>
-                          <td className="bg-surface px-4 py-4">
-                            <div className="h-4 w-10 animate-pulse rounded bg-muted-foreground/20" />
-                          </td>
-                          <td className="px-4 py-4">
-                            <div className="h-4 w-40 animate-pulse rounded bg-muted-foreground/20" />
-                          </td>
-                          <td className="px-4 py-4">
-                            <div className="h-5 w-24 animate-pulse rounded bg-muted-foreground/20" />
-                          </td>
-                          <td className="px-4 py-4">
-                            <div className="h-4 w-16 animate-pulse rounded bg-muted-foreground/20" />
-                          </td>
-                        </tr>
-                      ))}
-                    {!isPending && isError && (
-                      <tr>
-                        <td
-                          colSpan={4}
-                          className="px-4 py-6 text-center text-destructive"
-                        >
-                          {error instanceof Error
-                            ? error.message
-                            : "Unable to load timesheets."}
-                        </td>
-                      </tr>
+                Previous
+              </button>
+              {visiblePages.map((p, idx) =>
+                p === "ellipsis" ? (
+                  <span
+                    key={`ellipsis-${idx}`}
+                    className="border-r border-border px-3 py-2 text-muted-foreground/80"
+                  >
+                    ...
+                  </span>
+                ) : (
+                  <button
+                    key={p}
+                    onClick={() => goToPage(p)}
+                    className={cn(
+                      "px-3 py-2 text-sm",
+                      idx !== visiblePages.length - 1 &&
+                        "border-r border-border",
+                      p === page
+                        ? "font-semibold text-primary"
+                        : "text-muted-foreground hover:text-primary",
                     )}
-                    {!isPending && !isError && timesheets.length === 0 && (
-                      <tr>
-                        <td
-                          colSpan={4}
-                          className="px-4 py-6 text-center text-muted-foreground"
-                        >
-                          No timesheets found.
-                        </td>
-                      </tr>
-                    )}
-                    {!isPending &&
-                      !isError &&
-                      paginated.map((sheet) => (
-                        <tr key={sheet.id} className="hover:bg-primary/5">
-                          <td className="bg-muted/70 px-4 py-4 text-foreground">
-                            {sheet.week}
-                          </td>
-                          <td className="bg-surface px-4 py-4 text-foreground">
-                            {formatRange(sheet.startDate, sheet.endDate)}
-                          </td>
-                          <td className="bg-surface px-4 py-4">
-                            <StatusBadge status={sheet.status} />
-                          </td>
-                          <td className="bg-surface px-4 py-4 text-primary">
-                            <ActionButton
-                              label={actionLabel(sheet.status)}
-                              onClick={() => navigateToWeekTimesheet(sheet.id)}
-                            />
-                          </td>
-                        </tr>
-                      ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            <div className="mt-4 flex flex-wrap items-center justify-between gap-4 text-sm text-foreground">
-              <div className="relative">
-                <button
-                  onClick={() => setShowRowsMenu((v) => !v)}
-                  className="border-border-strong flex items-center gap-2 rounded-md border bg-muted/70 px-3 py-2 text-sm text-foreground shadow-sm"
-                >
-                  {pageSize} per page{" "}
-                  <span className="text-muted-foreground">▾</span>
-                </button>
-                {showRowsMenu && (
-                  <div className="bg-surface absolute z-20 mt-1 w-32 rounded-md border border-border shadow-lg">
-                    {[5, 10, 20].map((n) => (
-                      <button
-                        key={n}
-                        onClick={() => {
-                          setPageSize(n);
-                          setPage(1);
-                          setShowRowsMenu(false);
-                        }}
-                        className="hover:bg-surface-muted flex w-full items-center justify-between px-3 py-2 text-left text-sm"
-                      >
-                        {n} per page
-                        {pageSize === n && (
-                          <span className="text-primary">•</span>
-                        )}
-                      </button>
-                    ))}
-                  </div>
+                  >
+                    {p}
+                  </button>
+                ),
+              )}
+              <button
+                onClick={() => goToPage(page + 1)}
+                disabled={page === totalPages}
+                className={cn(
+                  "border-l border-border px-3 py-2 text-muted-foreground hover:text-primary",
+                  "disabled:cursor-not-allowed disabled:text-muted-foreground/60",
                 )}
-              </div>
-
-              <div className="bg-surface flex items-center overflow-hidden rounded-md border border-border text-sm text-muted-foreground shadow-sm">
-                <button
-                  onClick={() => goToPage(page - 1)}
-                  disabled={page === 1}
-                  className={cn(
-                    "border-r border-border px-3 py-2 text-muted-foreground hover:text-primary",
-                    "disabled:cursor-not-allowed disabled:text-muted-foreground/60",
-                  )}
-                >
-                  Previous
-                </button>
-                {visiblePages.map((p, idx) =>
-                  p === "ellipsis" ? (
-                    <span
-                      key={`ellipsis-${idx}`}
-                      className="border-r border-border px-3 py-2 text-muted-foreground/80"
-                    >
-                      ...
-                    </span>
-                  ) : (
-                    <button
-                      key={p}
-                      onClick={() => goToPage(p)}
-                      className={cn(
-                        "px-3 py-2 text-sm",
-                        idx !== visiblePages.length - 1 &&
-                          "border-r border-border",
-                        p === page
-                          ? "font-semibold text-primary"
-                          : "text-muted-foreground hover:text-primary",
-                      )}
-                    >
-                      {p}
-                    </button>
-                  ),
-                )}
-                <button
-                  onClick={() => goToPage(page + 1)}
-                  disabled={page === totalPages}
-                  className={cn(
-                    "border-l border-border px-3 py-2 text-muted-foreground hover:text-primary",
-                    "disabled:cursor-not-allowed disabled:text-muted-foreground/60",
-                  )}
-                >
-                  Next
-                </button>
-              </div>
+              >
+                Next
+              </button>
             </div>
           </div>
         </div>
+      </div>
 
-        <div className="bg-surface mt-6 rounded-xl border border-border px-8 py-6 text-center text-sm text-muted-foreground shadow-sm">
-          © 2024 tentwenty. All rights reserved.
-        </div>
-      </main>
       <Modal
         open={modalOpen}
         title={
@@ -586,6 +599,6 @@ export function TimesheetDashboard() {
           onClose={() => setModalOpen(false)}
         />
       </Modal>
-    </div>
+    </AppShell>
   );
 }

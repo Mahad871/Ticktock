@@ -4,8 +4,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { MoreHorizontal, Plus } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { signOut, useSession } from "next-auth/react";
 
+import { AppShell } from "@/components/layout/app-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -81,10 +81,14 @@ function TaskRow({
   task,
   onEdit,
   onDelete,
+  disabled,
+  deleting,
 }: {
   task: Task;
   onEdit: () => void;
   onDelete: () => void;
+  disabled?: boolean;
+  deleting?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
@@ -113,6 +117,7 @@ function TaskRow({
             className="hover:bg-surface-muted rounded px-1 py-1 text-muted-foreground"
             aria-label="More"
             onClick={() => setOpen((v) => !v)}
+            disabled={disabled}
           >
             <MoreHorizontal className="h-4 w-4" />
           </button>
@@ -127,6 +132,7 @@ function TaskRow({
                   setOpen(false);
                   onEdit();
                 }}
+                disabled={disabled}
               >
                 Edit
               </button>
@@ -136,8 +142,9 @@ function TaskRow({
                   setOpen(false);
                   onDelete();
                 }}
+                disabled={disabled}
               >
-                Delete
+                {deleting ? "Deleting..." : "Delete"}
               </button>
             </div>
           )}
@@ -170,10 +177,40 @@ function Modal({
   children: React.ReactNode;
   onClose: () => void;
 }) {
+  const dialogRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const first = dialogRef.current?.querySelector<HTMLElement>(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+    );
+    first?.focus();
+    const handleKey = (evt: KeyboardEvent) => {
+      if (evt.key === "Escape") {
+        evt.stopPropagation();
+        onClose();
+      }
+    };
+    document.addEventListener("keydown", handleKey);
+    return () => document.removeEventListener("keydown", handleKey);
+  }, [open, onClose]);
+
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4">
-      <div className="bg-surface w-full max-w-lg rounded-xl border border-border shadow-2xl">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4"
+      role="presentation"
+      onClick={(evt) => {
+        if (evt.target === evt.currentTarget) onClose();
+      }}
+    >
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
+        className="bg-surface w-full max-w-lg rounded-xl border border-border shadow-2xl outline-none"
+      >
         <div className="flex items-center justify-between border-b border-border px-5 py-4">
           <h3 className="text-lg font-semibold text-foreground">{title}</h3>
           <button
@@ -191,7 +228,6 @@ function Modal({
 }
 
 export function WeekTimesheet({ timesheetId = "4" }: WeekTimesheetProps) {
-  const { data: session, status: sessionStatus } = useSession();
   const [timesheetRange, setTimesheetRange] = useState("21 - 26 January, 2024");
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [selectedDayId, setSelectedDayId] = useState<string | null>(null);
@@ -206,7 +242,6 @@ export function WeekTimesheet({ timesheetId = "4" }: WeekTimesheetProps) {
 
   const [error, setError] = useState<string | null>(null);
   const queryClient = useQueryClient();
-  const [showUserMenu, setShowUserMenu] = useState(false);
 
   const {
     data: sheet,
@@ -221,6 +256,8 @@ export function WeekTimesheet({ timesheetId = "4" }: WeekTimesheetProps) {
   const createEntry = useCreateEntry(timesheetId);
   const updateEntry = useUpdateEntry(timesheetId);
   const deleteEntryMutation = useDeleteEntry(timesheetId);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const isSavingEntry = createEntry.isPending || updateEntry.isPending;
 
   const days: DayEntry[] = useMemo(() => {
     if (!sheet) return [];
@@ -328,6 +365,8 @@ export function WeekTimesheet({ timesheetId = "4" }: WeekTimesheetProps) {
   };
 
   const deleteTask = async (_dayId: string, taskId: string) => {
+    if (deleteEntryMutation.isPending) return;
+    setDeletingId(taskId);
     try {
       await deleteEntryMutation.mutateAsync(taskId);
       queryClient.invalidateQueries({ queryKey: ["timesheet", timesheetId] });
@@ -337,127 +376,88 @@ export function WeekTimesheet({ timesheetId = "4" }: WeekTimesheetProps) {
           ? err.message
           : "Unable to delete entry right now.",
       );
+    } finally {
+      setDeletingId(null);
     }
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <header className="bg-surface border-b border-border">
-        <div className="mx-auto flex items-center justify-between px-6 py-4">
-          <div className="flex items-center gap-6">
-            <span className="text-2xl font-semibold tracking-tight text-foreground">
-              ticktock
-            </span>
-            <nav className="text-sm font-medium text-foreground">
-              Timesheets
-            </nav>
+    <AppShell contentClassName="px-4 py-8 sm:px-6">
+      <div className="bg-surface rounded-xl border border-border shadow-sm">
+        <div className="flex flex-col gap-3 border-b border-border px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+          <div className="space-y-1">
+            <h1 className="text-lg font-semibold text-foreground">
+              This week’s timesheet
+            </h1>
+            <p className="text-xs text-muted-foreground">
+              {sheetPending ? "Loading..." : timesheetRange}
+            </p>
           </div>
-          <div className="relative">
-            <button
-              onClick={() => setShowUserMenu((v) => !v)}
-              className="text-sm font-medium text-muted-foreground hover:text-primary"
-            >
-              {sessionStatus === "loading"
-                ? "Loading..."
-                : session?.user?.name || session?.user?.email || "User"}{" "}
-              ▾
-            </button>
-            {showUserMenu && (
-              <div className="bg-surface absolute right-0 mt-2 w-40 rounded-md border border-border shadow-lg">
-                <button
-                  className="hover:bg-surface-muted flex w-full items-center px-3 py-2 text-left text-sm"
-                  onClick={() => {
-                    setShowUserMenu(false);
-                    signOut({ callbackUrl: "/" });
-                  }}
-                >
-                  Sign out
-                </button>
-              </div>
-            )}
+          <div className="mt-7 w-full sm:w-auto">
+            <ProgressBar value={totalHours} max={40} />
           </div>
         </div>
-      </header>
 
-      <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
-        <div className="bg-surface rounded-xl border border-border shadow-sm">
-          <div className="flex flex-col gap-3 border-b border-border px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-            <div className="space-y-1">
-              <h1 className="text-lg font-semibold text-foreground">
-                This week’s timesheet
-              </h1>
-              <p className="text-xs text-muted-foreground">
-                {sheetPending ? "Loading..." : timesheetRange}
-              </p>
-            </div>
-            <div className="mt-7 w-full sm:w-auto">
-              <ProgressBar value={totalHours} max={40} />
-            </div>
-          </div>
-
-          <div className="space-y-6 px-2 py-6 sm:px-6">
-            {(sheetPending || entriesPending) && (
-              <>
-                {[...Array(5)].map((_, idx) => (
-                  <div key={`skeleton-day-${idx}`} className="space-y-3">
-                    <div className="h-4 w-24 animate-pulse rounded bg-muted-foreground/20" />
-                    {[...Array(2)].map((__, jdx) => (
-                      <div
-                        key={`row-${idx}-${jdx}`}
-                        className="border-border-strong bg-surface flex items-center gap-3 rounded-md border border-dashed px-3 py-4"
-                      >
-                        <div className="h-4 w-32 animate-pulse rounded bg-muted-foreground/20" />
-                      </div>
-                    ))}
-                    <div className="border-border-strong h-10 w-full animate-pulse rounded-md border border-dashed bg-muted" />
-                  </div>
-                ))}
-              </>
-            )}
-
-            {!sheetPending &&
-              !entriesPending &&
-              days.map((day) => (
-                <div key={day.id} className="space-y-3">
-                  <div className="text-sm font-semibold text-foreground">
-                    {day.dateLabel}
-                  </div>
-
-                  {day.tasks.map((task) => (
-                    <TaskRow
-                      key={task.id}
-                      task={task}
-                      onEdit={() => openEdit(day.id, task)}
-                      onDelete={() => deleteTask(day.id, task.id)}
-                    />
+        <div className="space-y-6 px-2 py-6 sm:px-6">
+          {(sheetPending || entriesPending) && (
+            <>
+              {[...Array(5)].map((_, idx) => (
+                <div key={`skeleton-day-${idx}`} className="space-y-3">
+                  <div className="h-4 w-24 animate-pulse rounded bg-muted-foreground/20" />
+                  {[...Array(2)].map((__, jdx) => (
+                    <div
+                      key={`row-${idx}-${jdx}`}
+                      className="border-border-strong bg-surface flex items-center gap-3 rounded-md border border-dashed px-3 py-4"
+                    >
+                      <div className="h-4 w-32 animate-pulse rounded bg-muted-foreground/20" />
+                    </div>
                   ))}
-
-                  <AddTaskRow onAdd={() => openCreate(day.id)} />
+                  <div className="border-border-strong h-10 w-full animate-pulse rounded-md border border-dashed bg-muted" />
                 </div>
               ))}
+            </>
+          )}
 
-            {!sheetPending &&
-              !entriesPending &&
-              !sheetError &&
-              !entriesError &&
-              days.length === 0 && (
-                <div className="bg-surface-muted rounded-md border border-border px-4 py-6 text-center text-sm text-muted-foreground">
-                  No entries yet for this timesheet.
+          {!sheetPending &&
+            !entriesPending &&
+            days.map((day) => (
+              <div key={day.id} className="space-y-3">
+                <div className="text-sm font-semibold text-foreground">
+                  {day.dateLabel}
                 </div>
-              )}
 
-            {(sheetError || entriesError) && (
-              <div className="rounded-md border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-                Unable to load this week’s timesheet.
+                {day.tasks.map((task) => (
+                  <TaskRow
+                    key={task.id}
+                    task={task}
+                    onEdit={() => openEdit(day.id, task)}
+                    onDelete={() => deleteTask(day.id, task.id)}
+                    disabled={deleteEntryMutation.isPending}
+                    deleting={deletingId === task.id}
+                  />
+                ))}
+
+                <AddTaskRow onAdd={() => openCreate(day.id)} />
+              </div>
+            ))}
+
+          {!sheetPending &&
+            !entriesPending &&
+            !sheetError &&
+            !entriesError &&
+            days.length === 0 && (
+              <div className="bg-surface-muted rounded-md border border-border px-4 py-6 text-center text-sm text-muted-foreground">
+                No entries yet for this timesheet.
               </div>
             )}
-          </div>
-        </div>
 
-        <div className="bg-surface mt-6 rounded-xl border border-border px-8 py-6 text-center text-sm text-muted-foreground shadow-sm">
-          © 2024 tentwenty. All rights reserved.
+          {(sheetError || entriesError) && (
+            <div className="rounded-md border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+              Unable to load this week’s timesheet.
+            </div>
+          )}
         </div>
-      </main>
+      </div>
 
       <Modal
         open={modalOpen}
@@ -518,7 +518,9 @@ export function WeekTimesheet({ timesheetId = "4" }: WeekTimesheetProps) {
             <Button variant="ghost" onClick={() => setModalOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={upsertTask}>{form.id ? "Save" : "Add"}</Button>
+            <Button onClick={upsertTask} disabled={isSavingEntry}>
+              {isSavingEntry ? "Saving..." : form.id ? "Save" : "Add"}
+            </Button>
           </div>
         </div>
       </Modal>
@@ -536,6 +538,6 @@ export function WeekTimesheet({ timesheetId = "4" }: WeekTimesheetProps) {
         timesheetId={timesheetId}
         dayId={selectedDayId ?? ""}
       />
-    </div>
+    </AppShell>
   );
 }

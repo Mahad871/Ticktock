@@ -43,9 +43,7 @@ export default function Home() {
       <div className="bg-surface flex items-center justify-center px-6 py-12 lg:px-16">
         <div className="w-full max-w-xl space-y-8">
           <div className="space-y-2">
-            <h1 className="text-2xl font-semibold text-foreground">
-              Welcome back
-            </h1>
+            <h1 className="text-2xl font-bold text-foreground">Welcome back</h1>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
