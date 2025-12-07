@@ -5,7 +5,7 @@ import {
   listEntries,
   type TimesheetEntry,
 } from "@/lib/timesheet-entries";
-import { getTimesheet } from "@/lib/timesheets";
+import { getTimesheet, updateTimesheet } from "@/lib/timesheets";
 
 type Payload = {
   date?: unknown;
@@ -13,6 +13,21 @@ type Payload = {
   project?: unknown;
   hours?: unknown;
 };
+
+function recomputeTimesheetHours(timesheetId: string) {
+  const sheet = getTimesheet(timesheetId);
+  if (!sheet) return;
+  const totalHours = listEntries(timesheetId).reduce(
+    (sum, entry) => sum + entry.hours,
+    0,
+  );
+  updateTimesheet(timesheetId, {
+    week: sheet.week,
+    startDate: sheet.startDate,
+    endDate: sheet.endDate,
+    hours: totalHours,
+  });
+}
 
 function validatePayload(body: Payload) {
   const errors: string[] = [];
@@ -61,6 +76,8 @@ export async function POST(
     project: body.project as string,
     hours: body.hours as number,
   });
+
+  recomputeTimesheetHours(params.id);
 
   return NextResponse.json({ data: entry }, { status: 201 });
 }

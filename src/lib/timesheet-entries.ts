@@ -16,14 +16,33 @@ type UpsertEntryPayload = {
   hours: number;
 };
 
-const entriesStore: Record<string, TimesheetEntry[]> = {};
+const globalEntriesKey = "__tt_entries_store__";
+const existingEntries =
+  (globalThis as Record<string, unknown>)[globalEntriesKey] as
+    | Record<string, TimesheetEntry[]>
+    | undefined;
 
-Object.entries(mockTimesheetEntries).forEach(([timesheetId, entries]) => {
-  entriesStore[timesheetId] = entries.map((e) => ({
-    ...e,
-    timesheetId,
-  }));
-});
+const entriesStore: Record<string, TimesheetEntry[]> =
+  existingEntries ?? initializeEntriesStore();
+
+if (!existingEntries) {
+  (globalThis as Record<string, unknown>)[globalEntriesKey] = entriesStore;
+}
+
+function initializeEntriesStore(): Record<string, TimesheetEntry[]> {
+  const store: Record<string, TimesheetEntry[]> = {};
+  Object.entries(mockTimesheetEntries).forEach(([timesheetId, entries]) => {
+    store[timesheetId] = entries.map((e) => ({
+      ...e,
+      timesheetId,
+    }));
+  });
+  return store;
+}
+
+export function getEntriesStore() {
+  return entriesStore;
+}
 
 export function listEntries(timesheetId: string): TimesheetEntry[] {
   return entriesStore[timesheetId] ? [...entriesStore[timesheetId]] : [];

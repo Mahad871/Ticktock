@@ -2,10 +2,11 @@ import { NextResponse } from "next/server";
 
 import {
   deleteEntry,
+  listEntries,
   updateEntry,
   type TimesheetEntry,
 } from "@/lib/timesheet-entries";
-import { getTimesheet } from "@/lib/timesheets";
+import { getTimesheet, updateTimesheet } from "@/lib/timesheets";
 
 type Payload = {
   date?: unknown;
@@ -13,6 +14,21 @@ type Payload = {
   project?: unknown;
   hours?: unknown;
 };
+
+function recomputeTimesheetHours(timesheetId: string) {
+  const sheet = getTimesheet(timesheetId);
+  if (!sheet) return;
+  const totalHours = listEntries(timesheetId).reduce(
+    (sum, entry) => sum + entry.hours,
+    0,
+  );
+  updateTimesheet(timesheetId, {
+    week: sheet.week,
+    startDate: sheet.startDate,
+    endDate: sheet.endDate,
+    hours: totalHours,
+  });
+}
 
 function validatePayload(body: Payload) {
   const errors: string[] = [];
@@ -54,6 +70,8 @@ export async function PUT(
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
+  recomputeTimesheetHours(params.id);
+
   return NextResponse.json({ data: updated });
 }
 
@@ -70,5 +88,8 @@ export async function DELETE(
   if (!removed) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
+
+  recomputeTimesheetHours(params.id);
+
   return NextResponse.json({ data: removed });
 }

@@ -1,4 +1,4 @@
-import { mockTimesheets } from "@/lib/mock-data";
+import { mockTimesheetEntries, mockTimesheets } from "@/lib/mock-data";
 
 export type TimesheetStatus = "COMPLETED" | "INCOMPLETE" | "MISSING";
 
@@ -18,10 +18,32 @@ type UpsertPayload = {
   hours: number;
 };
 
-const store: Timesheet[] = mockTimesheets.map((t) => ({
-  ...t,
-  status: computeStatus(t.hours),
-}));
+const globalTimesheetKey = "__tt_timesheets_store__";
+const existingStore = (globalThis as Record<string, unknown>)[
+  globalTimesheetKey
+] as Timesheet[] | undefined;
+
+const store: Timesheet[] =
+  existingStore ?? initializeTimesheetStore(mockTimesheets);
+
+if (!existingStore) {
+  (globalThis as Record<string, unknown>)[globalTimesheetKey] = store;
+}
+
+function initializeTimesheetStore(seed: typeof mockTimesheets): Timesheet[] {
+  return seed.map((t) => {
+    const entryHours = mockTimesheetEntries[t.id]?.reduce(
+      (sum, entry) => sum + entry.hours,
+      0,
+    );
+    const hours = entryHours ?? t.hours;
+    return {
+      ...t,
+      hours,
+      status: computeStatus(hours),
+    };
+  });
+}
 
 export function computeStatus(hours: number): TimesheetStatus {
   if (hours >= 40) return "COMPLETED";

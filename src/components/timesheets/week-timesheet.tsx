@@ -308,7 +308,7 @@ export function WeekTimesheet({ timesheetId = "4" }: WeekTimesheetProps) {
       </header>
 
       <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
-        <div className="rounded-2xl border border-[#1f63f0] bg-[#fdfefe] shadow-sm">
+        <div className="rounded-xl border bg-[#fdfefe] shadow-sm">
           <div className="flex items-center justify-between border-b border-[#e7ebf3] px-6 py-4">
             <div className="space-y-1">
               <h1 className="text-lg font-semibold text-[#0f1729]">
@@ -341,7 +341,7 @@ export function WeekTimesheet({ timesheetId = "4" }: WeekTimesheetProps) {
           </div>
         </div>
 
-        <div className="mt-6 rounded-2xl border border-[#e7ebf3] bg-white px-8 py-6 text-center text-sm text-[#6b7280] shadow-sm">
+        <div className="mt-6 rounded-xl border border-[#e7ebf3] bg-white px-8 py-6 text-center text-sm text-[#6b7280] shadow-sm">
           © 2024 tentwenty. All rights reserved.
         </div>
       </main>
