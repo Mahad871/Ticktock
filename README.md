@@ -23,8 +23,6 @@ Timesheet dashboard built with Next.js 16 (App Router), React 19, and TailwindCS
 | ---------------- | ---------- |
 | demo@example.com | `password` |
 
-> Any email works with password `password` — this is a demo-only credentials flow.
-
 ## Frameworks & libraries
 
 - Next.js 16 App Router, React 19, TypeScript

@@ -2,6 +2,7 @@
 
 import { signOut, useSession } from "next-auth/react";
 import { useState, type ReactNode } from "react";
+import { useRouter } from "next/navigation";
 
 import { cn } from "@/lib/utils";
 
@@ -46,6 +47,7 @@ export function AppShell({
 }
 
 function UserMenu() {
+  const router = useRouter();
   const { data: session, status } = useSession();
   const [open, setOpen] = useState(false);
 
@@ -53,6 +55,14 @@ function UserMenu() {
     status === "loading"
       ? "Loading..."
       : session?.user?.name || session?.user?.email || "User";
+
+  const handleSignOut = async () => {
+    setOpen(false);
+    // Use redirect: false and manually navigate to avoid NEXTAUTH_URL issues
+    await signOut({ redirect: false });
+    router.push("/");
+    router.refresh();
+  };
 
   return (
     <div className="relative">
@@ -66,10 +76,7 @@ function UserMenu() {
         <div className="bg-surface absolute right-0 mt-2 w-40 rounded-md border border-border shadow-lg">
           <button
             className="hover:bg-surface-muted flex w-full items-center px-3 py-2 text-left text-sm"
-            onClick={async () => {
-              setOpen(false);
-              await signOut({ callbackUrl: "/", redirect: true });
-            }}
+            onClick={handleSignOut}
           >
             Sign out
           </button>
