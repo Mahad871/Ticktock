@@ -40,18 +40,20 @@ function ProgressBar({ value, max }: { value: number; max: number }) {
   const pct = Math.min(100, Math.round((value / max) * 100));
   return (
     <div className="relative flex items-center justify-end gap-3">
-      <div className="text-xs font-semibold text-[#0f1729]">
+      <div className="text-xs font-semibold text-foreground">
         {value}/{max} hrs
       </div>
       <div className="w-36">
-        <div className="relative h-1.5 rounded-full bg-[#e7ebf3]">
+        <div className="relative h-1.5 rounded-full bg-border">
           <div
-            className="absolute left-0 top-0 h-1.5 rounded-full bg-[#f37d32]"
+            className="absolute left-0 top-0 h-1.5 rounded-full bg-primary"
             style={{ width: `${pct}%` }}
           />
         </div>
       </div>
-      <div className="text-[10px] font-semibold text-[#9aa3b5]">100%</div>
+      <div className="text-[10px] font-semibold text-muted-foreground/70">
+        100%
+      </div>
     </div>
   );
 }
@@ -80,16 +82,16 @@ function TaskRow({
   }, [open]);
 
   return (
-    <div className="flex items-center gap-3 rounded-md border border-dashed border-[#d7dce5] bg-white px-3 py-2">
-      <div className="flex-1 text-sm text-[#0f1729]">{task.description}</div>
-      <div className="flex items-center gap-2 text-xs text-[#6b7280]">
+    <div className="border-border-strong bg-surface flex items-center gap-3 rounded-md border border-dashed px-3 py-2">
+      <div className="flex-1 text-sm text-foreground">{task.description}</div>
+      <div className="flex items-center gap-2 text-xs text-muted-foreground">
         <span>{task.hours} hrs</span>
-        <span className="rounded-sm border border-[#d7dce5] px-2 py-[2px] text-[#0f1729]">
+        <span className="border-border-strong rounded-sm border px-2 py-[2px] text-foreground">
           {task.project}
         </span>
         <div className="relative">
           <button
-            className="rounded px-1 py-1 text-[#6b7280] hover:bg-[#f1f3f7]"
+            className="hover:bg-surface-muted rounded px-1 py-1 text-muted-foreground"
             aria-label="More"
             onClick={() => setOpen((v) => !v)}
           >
@@ -98,10 +100,10 @@ function TaskRow({
           {open && (
             <div
               ref={menuRef}
-              className="absolute right-0 top-8 z-20 flex flex-col rounded-lg border border-[#e7ebf3] bg-white py-1 pr-6 shadow-lg"
+              className="bg-surface absolute right-0 top-8 z-20 flex flex-col rounded-lg border border-border py-1 pr-6 shadow-lg"
             >
               <button
-                className="flex w-full items-center px-2 py-2 text-left text-sm text-muted-foreground hover:bg-[#f7f9fd]"
+                className="hover:bg-surface-muted flex w-full items-center px-2 py-2 text-left text-sm text-muted-foreground"
                 onClick={() => {
                   setOpen(false);
                   onEdit();
@@ -110,7 +112,7 @@ function TaskRow({
                 Edit
               </button>
               <button
-                className="flex w-full items-center px-2 py-2 text-left text-sm text-[#d92c2c] hover:bg-[#fff5f5]"
+                className="flex w-full items-center px-2 py-2 text-left text-sm text-destructive hover:bg-destructive/10"
                 onClick={() => {
                   setOpen(false);
                   onDelete();
@@ -130,7 +132,7 @@ function AddTaskRow({ onAdd }: { onAdd: () => void }) {
   return (
     <button
       onClick={onAdd}
-      className="flex w-full items-center justify-center gap-2 rounded-md border border-dashed border-[#d7dce5] bg-[#f9fafb] px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-primary/10 hover:text-primary"
+      className="border-border-strong bg-surface-muted flex w-full items-center justify-center gap-2 rounded-md border border-dashed px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-primary/10 hover:text-primary"
     >
       <Plus className="h-4 w-4" />
       Add new task
@@ -152,12 +154,12 @@ function Modal({
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4">
-      <div className="w-full max-w-lg rounded-xl border border-[#e7ebf3] bg-white shadow-2xl">
-        <div className="flex items-center justify-between border-b border-[#e7ebf3] px-5 py-4">
-          <h3 className="text-lg font-semibold text-[#0f1729]">{title}</h3>
+      <div className="bg-surface w-full max-w-lg rounded-xl border border-border shadow-2xl">
+        <div className="flex items-center justify-between border-b border-border px-5 py-4">
+          <h3 className="text-lg font-semibold text-foreground">{title}</h3>
           <button
             aria-label="Close"
-            className="text-[#6b7280] hover:text-[#0f1729]"
+            className="text-muted-foreground hover:text-foreground"
             onClick={onClose}
           >
             ×
@@ -326,27 +328,29 @@ export function WeekTimesheet({ timesheetId = "4" }: WeekTimesheetProps) {
   };
 
   return (
-    <div className="min-h-screen bg-[#f7f8fb] text-[#0f1729]">
-      <header className="border-b border-[#e7ebf3] bg-white">
+    <div className="min-h-screen bg-background text-foreground">
+      <header className="bg-surface border-b border-border">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <div className="flex items-center gap-6">
-            <span className="text-xl font-semibold tracking-tight text-[#0f1729]">
+            <span className="text-xl font-semibold tracking-tight text-foreground">
               ticktock
             </span>
-            <nav className="text-sm font-medium text-[#0f1729]">Timesheets</nav>
+            <nav className="text-sm font-medium text-foreground">
+              Timesheets
+            </nav>
           </div>
-          <div className="text-sm font-medium text-[#0f1729]">John Doe ▾</div>
+          <div className="text-sm font-medium text-foreground">John Doe ▾</div>
         </div>
       </header>
 
       <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
-        <div className="rounded-xl border bg-[#fdfefe] shadow-sm">
-          <div className="flex items-center justify-between border-b border-[#e7ebf3] px-6 py-4">
+        <div className="bg-surface rounded-xl border border-border shadow-sm">
+          <div className="flex items-center justify-between border-b border-border px-6 py-4">
             <div className="space-y-1">
-              <h1 className="text-lg font-semibold text-[#0f1729]">
+              <h1 className="text-lg font-semibold text-foreground">
                 This week’s timesheet
               </h1>
-              <p className="text-xs text-[#6b7280]">{timesheetRange}</p>
+              <p className="text-xs text-muted-foreground">{timesheetRange}</p>
             </div>
             <ProgressBar value={totalHours} max={40} />
           </div>
@@ -354,7 +358,7 @@ export function WeekTimesheet({ timesheetId = "4" }: WeekTimesheetProps) {
           <div className="space-y-6 px-6 py-6">
             {days.map((day) => (
               <div key={day.id} className="space-y-3">
-                <div className="text-sm font-semibold text-[#0f1729]">
+                <div className="text-sm font-semibold text-foreground">
                   {day.dateLabel}
                 </div>
 
@@ -373,7 +377,7 @@ export function WeekTimesheet({ timesheetId = "4" }: WeekTimesheetProps) {
           </div>
         </div>
 
-        <div className="mt-6 rounded-xl border border-[#e7ebf3] bg-white px-8 py-6 text-center text-sm text-[#6b7280] shadow-sm">
+        <div className="bg-surface mt-6 rounded-xl border border-border px-8 py-6 text-center text-sm text-muted-foreground shadow-sm">
           © 2024 tentwenty. All rights reserved.
         </div>
       </main>
@@ -385,7 +389,7 @@ export function WeekTimesheet({ timesheetId = "4" }: WeekTimesheetProps) {
       >
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label className="text-sm text-[#0f1729]" htmlFor="description">
+            <Label className="text-sm text-foreground" htmlFor="description">
               Description
             </Label>
             <Input
@@ -397,7 +401,7 @@ export function WeekTimesheet({ timesheetId = "4" }: WeekTimesheetProps) {
             />
           </div>
           <div className="space-y-2">
-            <Label className="text-sm text-[#0f1729]" htmlFor="project">
+            <Label className="text-sm text-foreground" htmlFor="project">
               Project
             </Label>
             <Input
@@ -409,7 +413,7 @@ export function WeekTimesheet({ timesheetId = "4" }: WeekTimesheetProps) {
             />
           </div>
           <div className="space-y-2">
-            <Label className="text-sm text-[#0f1729]" htmlFor="hours">
+            <Label className="text-sm text-foreground" htmlFor="hours">
               Hours
             </Label>
             <Input

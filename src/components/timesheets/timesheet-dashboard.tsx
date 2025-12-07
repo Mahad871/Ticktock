@@ -46,7 +46,7 @@ function ActionButton({
 }) {
   return (
     <button
-      className="text-sm font-medium text-[#1f63f0] hover:underline"
+      className="text-sm font-medium text-primary hover:underline"
       onClick={onClick}
     >
       {label}
@@ -68,12 +68,12 @@ function Modal({
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-      <div className="w-full max-w-lg rounded-xl border border-[#e7ebf3] bg-white shadow-2xl">
-        <div className="flex items-center justify-between border-b border-[#e7ebf3] px-5 py-4">
-          <h3 className="text-lg font-semibold text-[#0f1729]">{title}</h3>
+      <div className="bg-surface w-full max-w-lg rounded-xl border border-border shadow-2xl">
+        <div className="flex items-center justify-between border-b border-border px-5 py-4">
+          <h3 className="text-lg font-semibold text-foreground">{title}</h3>
           <button
             aria-label="Close"
-            className="text-[#6b7280] hover:text-[#0f1729]"
+            className="text-muted-foreground hover:text-foreground"
             onClick={onClose}
           >
             ×
@@ -251,22 +251,24 @@ export function TimesheetDashboard() {
   }, [page, totalPages]);
 
   return (
-    <div className="min-h-screen bg-[#f7f8fb] text-[#0f1729]">
-      <header className="border-b border-[#e7ebf3] bg-white">
+    <div className="min-h-screen bg-background text-foreground">
+      <header className="bg-surface border-b border-border">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <div className="flex items-center gap-6">
-            <span className="text-xl font-semibold tracking-tight text-[#0f1729]">
+            <span className="text-xl font-semibold tracking-tight text-foreground">
               ticktock
             </span>
-            <nav className="text-sm font-medium text-[#0f1729]">Timesheets</nav>
+            <nav className="text-sm font-medium text-foreground">
+              Timesheets
+            </nav>
           </div>
-          <div className="text-sm font-medium text-[#0f1729]">John Doe ▾</div>
+          <div className="text-sm font-medium text-foreground">John Doe ▾</div>
         </div>
       </header>
       <main className="mx-auto max-w-6xl px-6 py-10">
-        <div className="rounded-xl border border-[#e7ebf3] bg-white shadow-sm">
+        <div className="bg-surface rounded-xl border border-border shadow-sm">
           <div className="flex flex-wrap items-center gap-4 px-8 py-6">
-            <h1 className="text-2xl font-semibold text-[#0f1729]">
+            <h1 className="text-2xl font-semibold text-foreground">
               Your Timesheets
             </h1>
           </div>
@@ -275,7 +277,7 @@ export function TimesheetDashboard() {
             <div className="relative">
               <button
                 onClick={() => setShowRangePicker((v) => !v)}
-                className="flex h-10 items-center gap-2 rounded-md border border-[#d7dce5] bg-white px-3 text-sm text-[#0f1729] shadow-sm"
+                className="border-border-strong bg-surface flex h-10 items-center gap-2 rounded-md border px-3 text-sm text-foreground shadow-sm"
               >
                 {dateRange?.from && dateRange?.to
                   ? `${format(dateRange.from, "d MMM, yyyy")} - ${format(
@@ -283,10 +285,10 @@ export function TimesheetDashboard() {
                       "d MMM, yyyy",
                     )}`
                   : "Date Range"}
-                <span className="text-[#6b7280]">▾</span>
+                <span className="text-muted-foreground">▾</span>
               </button>
               {showRangePicker && (
-                <div className="absolute z-20 mt-2 rounded-lg border border-[#d7dce5] bg-white p-3 shadow-lg">
+                <div className="bg-surface absolute z-20 mt-2 rounded-lg border border-border p-3 shadow-lg">
                   <Calendar
                     mode="range"
                     defaultMonth={dateRange?.from}
@@ -335,7 +337,7 @@ export function TimesheetDashboard() {
               <button
                 title="Status"
                 onClick={() => setShowStatusMenu((v) => !v)}
-                className="flex h-10 items-center gap-2 rounded-md border border-[#d7dce5] bg-white px-3 text-sm text-[#0f1729] shadow-sm"
+                className="border-border-strong bg-surface flex h-10 items-center gap-2 rounded-md border px-3 text-sm text-foreground shadow-sm"
               >
                 {statusFilter === "ALL"
                   ? "Status"
@@ -344,10 +346,10 @@ export function TimesheetDashboard() {
                     : statusFilter === "INCOMPLETE"
                       ? "Incomplete"
                       : "Missing"}
-                <span className="text-[#6b7280]">▾</span>
+                <span className="text-muted-foreground">▾</span>
               </button>
               {showStatusMenu && (
-                <div className="absolute z-20 mt-1 w-40 rounded-md border border-[#d7dce5] bg-white shadow-lg">
+                <div className="bg-surface absolute z-20 mt-1 w-40 rounded-md border border-border shadow-lg">
                   {[
                     { label: "Status", value: "ALL" },
                     { label: "Completed", value: "COMPLETED" },
@@ -360,7 +362,7 @@ export function TimesheetDashboard() {
                         setStatusFilter(opt.value as TimesheetStatus | "ALL");
                         setShowStatusMenu(false);
                       }}
-                      className="flex w-full items-center justify-between px-3 py-2 text-left text-sm hover:bg-[#f1f3f7]"
+                      className="hover:bg-surface-muted flex w-full items-center justify-between px-3 py-2 text-left text-sm"
                     >
                       {opt.label}
                       {statusFilter === opt.value && (
@@ -391,34 +393,36 @@ export function TimesheetDashboard() {
           </div>
 
           <div className="px-8 pb-6">
-            <div className="overflow-hidden rounded-lg border border-[#e7ebf3]">
-              <table className="min-w-full divide-y divide-[#e7ebf3] bg-white text-sm">
-                <thead className="bg-muted/60 text-xs font-semibold uppercase text-[#6b7280]">
+            <div className="overflow-hidden rounded-lg border border-border">
+              <table className="bg-surface min-w-full divide-y divide-border text-sm">
+                <thead className="bg-muted/60 text-xs font-semibold uppercase text-muted-foreground">
                   <tr>
                     <th className="px-4 py-3 text-left">
                       <span className="inline-flex items-center gap-1">
-                        Week # <span className="text-[#9aa3b5]">↓</span>
+                        Week #{" "}
+                        <span className="text-muted-foreground/70">↓</span>
                       </span>
                     </th>
                     <th className="px-4 py-3 text-left">
                       <span className="inline-flex items-center gap-1">
-                        Date <span className="text-[#9aa3b5]">↓</span>
+                        Date <span className="text-muted-foreground/70">↓</span>
                       </span>
                     </th>
                     <th className="px-4 py-3 text-left">
                       <span className="inline-flex items-center gap-1">
-                        Status <span className="text-[#9aa3b5]">↓</span>
+                        Status{" "}
+                        <span className="text-muted-foreground/70">↓</span>
                       </span>
                     </th>
                     <th className="px-4 py-3 text-left">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#e7ebf3] bg-white text-sm">
+                <tbody className="bg-surface divide-y divide-border text-sm">
                   {loading && (
                     <tr>
                       <td
                         colSpan={4}
-                        className="px-4 py-6 text-center text-[#6b7280]"
+                        className="px-4 py-6 text-center text-muted-foreground"
                       >
                         Loading timesheets...
                       </td>
@@ -428,7 +432,7 @@ export function TimesheetDashboard() {
                     <tr>
                       <td
                         colSpan={4}
-                        className="px-4 py-6 text-center text-red-600"
+                        className="px-4 py-6 text-center text-destructive"
                       >
                         {error}
                       </td>
@@ -438,7 +442,7 @@ export function TimesheetDashboard() {
                     <tr>
                       <td
                         colSpan={4}
-                        className="px-4 py-6 text-center text-[#6b7280]"
+                        className="px-4 py-6 text-center text-muted-foreground"
                       >
                         No timesheets found.
                       </td>
@@ -448,10 +452,10 @@ export function TimesheetDashboard() {
                     !error &&
                     paginated.map((sheet) => (
                       <tr key={sheet.id} className="hover:bg-primary/5">
-                        <td className="bg-muted/60 px-4 py-4 text-[#0f1729]">
+                        <td className="bg-muted/60 px-4 py-4 text-foreground">
                           {sheet.week}
                         </td>
-                        <td className="px-4 py-4 text-[#0f1729]">
+                        <td className="px-4 py-4 text-foreground">
                           {formatRange(sheet.startDate, sheet.endDate)}
                         </td>
                         <td className="px-4 py-4">
@@ -469,16 +473,17 @@ export function TimesheetDashboard() {
               </table>
             </div>
 
-            <div className="mt-4 flex flex-wrap items-center justify-between gap-4 text-sm text-[#0f1729]">
+            <div className="mt-4 flex flex-wrap items-center justify-between gap-4 text-sm text-foreground">
               <div className="relative">
                 <button
                   onClick={() => setShowRowsMenu((v) => !v)}
-                  className="flex items-center gap-2 rounded-md border border-[#d7dce5] bg-muted/60 px-3 py-2 text-sm text-[#0f1729] shadow-sm"
+                  className="border-border-strong flex items-center gap-2 rounded-md border bg-muted/60 px-3 py-2 text-sm text-foreground shadow-sm"
                 >
-                  {pageSize} per page <span className="text-[#6b7280]">▾</span>
+                  {pageSize} per page{" "}
+                  <span className="text-muted-foreground">▾</span>
                 </button>
                 {showRowsMenu && (
-                  <div className="absolute z-20 mt-1 w-32 rounded-md border border-[#d7dce5] bg-white shadow-lg">
+                  <div className="bg-surface absolute z-20 mt-1 w-32 rounded-md border border-border shadow-lg">
                     {[5, 10, 20].map((n) => (
                       <button
                         key={n}
@@ -487,7 +492,7 @@ export function TimesheetDashboard() {
                           setPage(1);
                           setShowRowsMenu(false);
                         }}
-                        className="flex w-full items-center justify-between px-3 py-2 text-left text-sm hover:bg-[#f1f3f7]"
+                        className="hover:bg-surface-muted flex w-full items-center justify-between px-3 py-2 text-left text-sm"
                       >
                         {n} per page
                         {pageSize === n && (
@@ -499,14 +504,13 @@ export function TimesheetDashboard() {
                 )}
               </div>
 
-              <div className="flex items-center overflow-hidden rounded-md border border-[#e7ebf3] bg-white text-sm text-[#4b5563] shadow-sm">
+              <div className="bg-surface flex items-center overflow-hidden rounded-md border border-border text-sm text-muted-foreground shadow-sm">
                 <button
                   onClick={() => goToPage(page - 1)}
                   disabled={page === 1}
                   className={cn(
-                    "px-3 py-2 text-[#4b5563] hover:text-primary",
-                    "border-r border-[#e7ebf3]",
-                    "disabled:cursor-not-allowed disabled:text-[#c0c4cf]",
+                    "border-r border-border px-3 py-2 text-muted-foreground hover:text-primary",
+                    "disabled:cursor-not-allowed disabled:text-muted-foreground/60",
                   )}
                 >
                   Previous
@@ -515,7 +519,7 @@ export function TimesheetDashboard() {
                   p === "ellipsis" ? (
                     <span
                       key={`ellipsis-${idx}`}
-                      className="border-r border-[#e7ebf3] px-3 py-2 text-[#9aa3b5]"
+                      className="border-r border-border px-3 py-2 text-muted-foreground/80"
                     >
                       ...
                     </span>
@@ -526,10 +530,10 @@ export function TimesheetDashboard() {
                       className={cn(
                         "px-3 py-2 text-sm",
                         idx !== visiblePages.length - 1 &&
-                          "border-r border-[#e7ebf3]",
+                          "border-r border-border",
                         p === page
                           ? "font-semibold text-primary"
-                          : "text-[#4b5563] hover:text-primary",
+                          : "text-muted-foreground hover:text-primary",
                       )}
                     >
                       {p}
@@ -540,8 +544,8 @@ export function TimesheetDashboard() {
                   onClick={() => goToPage(page + 1)}
                   disabled={page === totalPages}
                   className={cn(
-                    "border-l border-[#e7ebf3] px-3 py-2 text-[#4b5563] hover:text-primary",
-                    "disabled:cursor-not-allowed disabled:text-[#c0c4cf]",
+                    "border-l border-border px-3 py-2 text-muted-foreground hover:text-primary",
+                    "disabled:cursor-not-allowed disabled:text-muted-foreground/60",
                   )}
                 >
                   Next
@@ -551,7 +555,7 @@ export function TimesheetDashboard() {
           </div>
         </div>
 
-        <div className="mt-6 rounded-xl border border-[#e7ebf3] bg-white px-8 py-6 text-center text-sm text-[#6b7280] shadow-sm">
+        <div className="bg-surface mt-6 rounded-xl border border-border px-8 py-6 text-center text-sm text-muted-foreground shadow-sm">
           © 2024 tentwenty. All rights reserved.
         </div>
       </main>
@@ -569,7 +573,7 @@ export function TimesheetDashboard() {
         <div className="space-y-4">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-[#0f1729]">
+              <label className="text-sm font-medium text-foreground">
                 Week #
               </label>
               <Input
@@ -583,7 +587,7 @@ export function TimesheetDashboard() {
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-[#0f1729]">
+              <label className="text-sm font-medium text-foreground">
                 Hours
               </label>
               <Input
@@ -604,7 +608,7 @@ export function TimesheetDashboard() {
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-[#0f1729]">
+              <label className="text-sm font-medium text-foreground">
                 Start date
               </label>
               <Input
@@ -617,7 +621,7 @@ export function TimesheetDashboard() {
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-[#0f1729]">
+              <label className="text-sm font-medium text-foreground">
                 End date
               </label>
               <Input

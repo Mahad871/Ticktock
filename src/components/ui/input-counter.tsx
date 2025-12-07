@@ -31,7 +31,7 @@ export function InputCounter({
         type="button"
         variant="outline"
         size="icon"
-        className="h-9 w-9 rounded-md border border-[#d7dce5] text-[#0f1729] shadow-sm"
+        className="border-border-strong h-9 w-9 rounded-md border text-foreground shadow-sm"
         onClick={() => onChange(clamp(value - step))}
         disabled={value <= min}
       >
@@ -41,13 +41,13 @@ export function InputCounter({
         type="number"
         value={value}
         onChange={(e) => onChange(clamp(Number(e.target.value)))}
-        className="h-9 w-16 rounded-md border border-[#d7dce5] text-center text-sm text-[#0f1729] shadow-sm"
+        className="border-border-strong h-9 w-16 rounded-md border text-center text-sm text-foreground shadow-sm"
       />
       <Button
         type="button"
         variant="outline"
         size="icon"
-        className="h-9 w-9 rounded-md border border-[#d7dce5] text-[#0f1729] shadow-sm"
+        className="border-border-strong h-9 w-9 rounded-md border text-foreground shadow-sm"
         onClick={() => onChange(clamp(value + step))}
         disabled={value >= max}
       >

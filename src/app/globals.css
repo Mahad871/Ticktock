@@ -3,48 +3,69 @@
 @tailwind utilities;
 
 :root {
-  --background: 0 0% 100%;
-  --foreground: 240 10% 3.9%;
-  --card: 0 0% 100%;
-  --card-foreground: 240 10% 3.9%;
-  --popover: 0 0% 100%;
-  --popover-foreground: 240 10% 3.9%;
-  --primary: 220 87% 53%;
+  --background: 220 33% 98%; /* page background (#f7f8fb) */
+  --foreground: 222 46% 11%; /* primary text (#0f1729) */
+  --surface: 0 0% 100%; /* cards, modals */
+  --surface-muted: 220 27% 97%; /* light surfaces (#f9fafb) */
+  --border: 219 29% 90%; /* soft border (#e7ebf3) */
+  --border-strong: 220 20% 84%; /* table separators (#d7dce5) */
+  --card: var(--surface);
+  --card-foreground: var(--foreground);
+  --popover: var(--surface);
+  --popover-foreground: var(--foreground);
+  --primary: 220 87% 53%; /* #1f63f0 */
   --primary-foreground: 0 0% 100%;
-  --secondary: 240 4.8% 95.9%;
-  --secondary-foreground: 240 5.9% 10%;
-  --muted: 240 4.8% 95.9%;
-  --muted-foreground: 240 3.8% 46.1%;
-  --accent: 240 4.8% 95.9%;
-  --accent-foreground: 240 5.9% 10%;
+  --secondary: 220 27% 97%;
+  --secondary-foreground: 222 46% 11%;
+  --muted: 220 27% 97%;
+  --muted-foreground: 220 9% 46%; /* #6b7280 */
+  --accent: 220 27% 97%;
+  --accent-foreground: 222 46% 11%;
   --destructive: 0 72.2% 50.6%;
   --destructive-foreground: 0 0% 98%;
-  --border: 240 5.9% 90%;
-  --input: 240 5.9% 90%;
+  --input: var(--border-strong);
   --ring: 245 58.4% 51.6%;
   --radius: 0.75rem;
+
+  /* Status tokens */
+  --status-success-bg: 144 54% 93%; /* #e4f6ed */
+  --status-success-fg: 158 53% 41%; /* #2f9b76 */
+  --status-warn-bg: 48 100% 93%; /* #fff7d8 */
+  --status-warn-fg: 52 100% 39%; /* #c6a300 */
+  --status-danger-bg: 333 100% 95%; /* #ffe5f1 */
+  --status-danger-fg: 333 53% 50%; /* #c3407b */
 }
 
 .dark {
-  --background: 240 10% 3.9%;
+  --background: 240 10% 5%;
   --foreground: 0 0% 98%;
-  --card: 240 10% 3.9%;
-  --card-foreground: 0 0% 98%;
-  --popover: 240 10% 3.9%;
-  --popover-foreground: 0 0% 98%;
+  --surface: 228 10% 12%;
+  --surface-muted: 228 10% 16%;
+  --border: 228 10% 25%;
+  --border-strong: 228 10% 32%;
+  --card: var(--surface);
+  --card-foreground: var(--foreground);
+  --popover: var(--surface);
+  --popover-foreground: var(--foreground);
   --primary: 220 87% 53%;
   --primary-foreground: 0 0% 100%;
-  --secondary: 240 3.7% 15.9%;
-  --secondary-foreground: 0 0% 98%;
-  --muted: 240 3.7% 15.9%;
+  --secondary: 228 10% 16%;
+  --secondary-foreground: var(--foreground);
+  --muted: 228 10% 16%;
   --muted-foreground: 240 5% 64.9%;
-  --accent: 240 3.7% 15.9%;
-  --accent-foreground: 0 0% 98%;
+  --accent: 228 10% 16%;
+  --accent-foreground: var(--foreground);
   --destructive: 0 62.8% 30.6%;
   --destructive-foreground: 0 0% 98%;
-  --border: 240 3.7% 15.9%;
-  --input: 240 3.7% 15.9%;
+  --input: var(--border-strong);
   --ring: 245 60.5% 64.7%;
+
+  --status-success-bg: 153 34% 18%;
+  --status-success-fg: 144 55% 70%;
+  --status-warn-bg: 42 80% 18%;
+  --status-warn-fg: 50 90% 70%;
+  --status-danger-bg: 330 40% 20%;
+  --status-danger-fg: 333 60% 75%;
 }
 
 @layer base {

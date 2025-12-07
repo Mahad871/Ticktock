@@ -77,13 +77,13 @@ export function AddEntryDialog({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4">
-      <div className="w-full max-w-3xl rounded-md border border-[#d7dce5] bg-white shadow-2xl">
-        <div className="flex items-center justify-between border-b border-[#d7dce5] px-6 py-4">
-          <h2 className="text-lg font-semibold text-[#0f1729]">
+      <div className="bg-surface w-full max-w-3xl rounded-md border border-border shadow-2xl">
+        <div className="flex items-center justify-between border-b border-border px-6 py-4">
+          <h2 className="text-lg font-semibold text-foreground">
             Add New Entry
           </h2>
           <button
-            className="text-[#6b7280] hover:text-[#0f1729]"
+            className="text-muted-foreground hover:text-foreground"
             onClick={onClose}
             aria-label="Close"
           >
@@ -93,8 +93,9 @@ export function AddEntryDialog({
 
         <div className="space-y-6 px-6 py-6">
           <div className="space-y-2">
-            <div className="flex items-center gap-1 text-sm font-medium text-[#0f1729]">
-              Select Project <span className="text-[#c3407b]">*</span>
+            <div className="flex items-center gap-1 text-sm font-medium text-foreground">
+              Select Project{" "}
+              <span className="text-status-danger-foreground">*</span>
             </div>
             <Select value={project} onValueChange={setProject}>
               <SelectTrigger>
@@ -111,8 +112,9 @@ export function AddEntryDialog({
           </div>
 
           <div className="space-y-2">
-            <div className="flex items-center gap-1 text-sm font-medium text-[#0f1729]">
-              Type of Work <span className="text-[#c3407b]">*</span>
+            <div className="flex items-center gap-1 text-sm font-medium text-foreground">
+              Type of Work{" "}
+              <span className="text-status-danger-foreground">*</span>
             </div>
             <Select value={typeOfWork} onValueChange={setTypeOfWork}>
               <SelectTrigger>
@@ -127,8 +129,9 @@ export function AddEntryDialog({
           </div>
 
           <div className="space-y-2">
-            <div className="flex items-center gap-1 text-sm font-medium text-[#0f1729]">
-              Task description <span className="text-[#c3407b]">*</span>
+            <div className="flex items-center gap-1 text-sm font-medium text-foreground">
+              Task description{" "}
+              <span className="text-status-danger-foreground">*</span>
             </div>
             <Textarea
               placeholder="Write text here ..."
@@ -136,12 +139,14 @@ export function AddEntryDialog({
               onChange={(e) => setDescription(e.target.value)}
               className="min-h-[140px]"
             />
-            <div className="text-xs text-[#6b7280]">A note for extra info</div>
+            <div className="text-xs text-muted-foreground">
+              A note for extra info
+            </div>
           </div>
 
           <div className="space-y-2">
-            <div className="flex items-center gap-1 text-sm font-medium text-[#0f1729]">
-              Hours <span className="text-[#c3407b]">*</span>
+            <div className="flex items-center gap-1 text-sm font-medium text-foreground">
+              Hours <span className="text-status-danger-foreground">*</span>
             </div>
             <InputCounter
               value={hours}
@@ -159,7 +164,7 @@ export function AddEntryDialog({
           )}
         </div>
 
-        <div className="flex items-center justify-end gap-3 border-t border-[#d7dce5] bg-[#f9fafb] px-6 py-4">
+        <div className="bg-surface-muted flex items-center justify-end gap-3 border-t border-border px-6 py-4">
           <Button variant="ghost" onClick={onClose}>
             Cancel
           </Button>

@@ -8,18 +8,18 @@ const statusStyles: Record<
   { bg: string; text: string; label: string }
 > = {
   COMPLETED: {
-    bg: "bg-[#e4f6ed]",
-    text: "text-[#2f9b76]",
+    bg: "bg-status-success",
+    text: "text-status-success-foreground",
     label: "COMPLETED",
   },
   INCOMPLETE: {
-    bg: "bg-[#fff7d8]",
-    text: "text-[#c6a300]",
+    bg: "bg-status-warn",
+    text: "text-status-warn-foreground",
     label: "INCOMPLETE",
   },
   MISSING: {
-    bg: "bg-[#ffe5f1]",
-    text: "text-[#c3407b]",
+    bg: "bg-status-danger",
+    text: "text-status-danger-foreground",
     label: "MISSING",
   },
 };

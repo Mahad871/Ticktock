@@ -40,10 +40,10 @@ export default function Home() {
 
   return (
     <div className="grid min-h-screen grid-cols-1 lg:grid-cols-[1.05fr_0.95fr]">
-      <div className="flex items-center justify-center bg-white px-6 py-12 lg:px-16">
+      <div className="bg-surface flex items-center justify-center px-6 py-12 lg:px-16">
         <div className="w-full max-w-xl space-y-8">
           <div className="space-y-2">
-            <h1 className="text-2xl font-semibold text-[#0f1729]">
+            <h1 className="text-2xl font-semibold text-foreground">
               Welcome back
             </h1>
           </div>
@@ -52,7 +52,7 @@ export default function Home() {
             <div className="space-y-2">
               <label
                 htmlFor="email"
-                className="text-sm font-medium text-[#0f1729]"
+                className="text-sm font-medium text-foreground"
               >
                 Email
               </label>
@@ -64,14 +64,14 @@ export default function Home() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 autoComplete="email"
-                className="h-11 rounded-md border border-[#d7dce5] bg-white text-[15px] text-[#0f1729] shadow-none placeholder:text-[#9aa3b5] focus:border-[#1f63f0] focus:ring-[#1f63f0]"
+                className="border-border-strong bg-surface h-11 rounded-md border text-[15px] text-foreground shadow-none placeholder:text-muted-foreground focus:border-primary focus:ring-primary"
               />
             </div>
 
             <div className="space-y-2">
               <label
                 htmlFor="password"
-                className="text-sm font-medium text-[#0f1729]"
+                className="text-sm font-medium text-foreground"
               >
                 Password
               </label>
@@ -83,17 +83,18 @@ export default function Home() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 autoComplete="current-password"
-                className="h-11 rounded-md border border-[#d7dce5] bg-white text-[15px] text-[#0f1729] shadow-none placeholder:text-[#9aa3b5] focus:border-[#1f63f0] focus:ring-[#1f63f0]"
+                className="border-border-strong bg-surface h-11 rounded-md border text-[15px] text-foreground shadow-none placeholder:text-muted-foreground focus:border-primary focus:ring-primary"
               />
             </div>
 
             {process.env.NODE_ENV === "development" && (
-              <p className="text-sm text-[#6b7280]">
+              <p className="text-sm text-muted-foreground">
                 Demo:{" "}
-                <span className="font-semibold text-[#0f1729]">
+                <span className="font-semibold text-foreground">
                   demo@example.com
                 </span>{" "}
-                / <span className="font-semibold text-[#0f1729]">password</span>
+                /{" "}
+                <span className="font-semibold text-foreground">password</span>
               </p>
             )}
 
@@ -103,11 +104,11 @@ export default function Home() {
                 type="checkbox"
                 checked={rememberMe}
                 onChange={(e) => setRememberMe(e.target.checked)}
-                className="h-4 w-4 rounded border-[#cbd5e1] text-[#1f63f0] focus:ring-1 focus:ring-[#1f63f0]"
+                className="border-border-strong h-4 w-4 rounded text-primary focus:ring-1 focus:ring-primary"
               />
               <label
                 htmlFor="rememberMe"
-                className="text-sm font-medium text-[#0f1729]"
+                className="text-sm font-medium text-foreground"
               >
                 Remember me
               </label>
@@ -122,7 +123,7 @@ export default function Home() {
             <button
               type="submit"
               disabled={submitting}
-              className="flex h-12 w-full items-center justify-center rounded-md bg-[#1f63f0] text-[15px] font-semibold text-white transition hover:bg-[#1955cf] disabled:opacity-70"
+              className="flex h-12 w-full items-center justify-center rounded-md bg-primary text-[15px] font-semibold text-primary-foreground transition hover:bg-primary/90 disabled:opacity-70"
             >
               {submitting ? "Signing in..." : "Sign in"}
             </button>
@@ -130,10 +131,10 @@ export default function Home() {
         </div>
       </div>
 
-      <div className="flex items-center justify-center bg-[#1f63f0] px-8 py-16 text-white">
+      <div className="flex items-center justify-center bg-primary px-8 py-16 text-primary-foreground">
         <div className="max-w-md space-y-4">
           <h2 className="text-[34px] font-semibold leading-tight">ticktock</h2>
-          <p className="text-base leading-7 text-white/90">
+          <p className="text-base leading-7 text-primary-foreground/90">
             Introducing ticktock, our cutting-edge timesheet web application
             designed to revolutionize how you manage employee work hours. With
             ticktock, you can effortlessly track and monitor employee attendance

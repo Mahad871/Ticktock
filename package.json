@@ -24,6 +24,10 @@
     "react": "19.2.0",
     "react-day-picker": "^9.12.0",
     "react-dom": "19.2.0",
+    "@tanstack/react-query": "^5.62.8",
+    "react-hook-form": "^7.53.0",
+    "@hookform/resolvers": "^3.9.0",
+    "zod": "^3.23.8",
     "tailwind-merge": "^2.5.5",
     "tailwindcss-animate": "^1.0.7"
   },

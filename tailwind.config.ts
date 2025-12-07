@@ -20,10 +20,15 @@ const config: Config = {
     extend: {
       colors: {
         border: "hsl(var(--border))",
+        "border-strong": "hsl(var(--border-strong))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
+        surface: {
+          DEFAULT: "hsl(var(--surface))",
+          muted: "hsl(var(--surface-muted))",
+        },
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
@@ -51,6 +56,20 @@ const config: Config = {
         card: {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
+        },
+        status: {
+          success: {
+            DEFAULT: "hsl(var(--status-success-bg))",
+            foreground: "hsl(var(--status-success-fg))",
+          },
+          warn: {
+            DEFAULT: "hsl(var(--status-warn-bg))",
+            foreground: "hsl(var(--status-warn-fg))",
+          },
+          danger: {
+            DEFAULT: "hsl(var(--status-danger-bg))",
+            foreground: "hsl(var(--status-danger-fg))",
+          },
         },
       },
       borderRadius: {
