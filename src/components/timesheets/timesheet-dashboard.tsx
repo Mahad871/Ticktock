@@ -1,12 +1,14 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { format } from "date-fns";
 import { type DateRange } from "react-day-picker";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
+import { signOut, useSession } from "next-auth/react";
 
 import { StatusBadge } from "@/components/timesheets/status-badge";
+import { TimesheetForm } from "@/components/timesheets/timesheet-form";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
@@ -115,6 +117,8 @@ export function TimesheetDashboard() {
   const [formError, setFormError] = useState<string | null>(null);
   const router = useRouter();
   const queryClient = useQueryClient();
+  const { data: session, status: sessionStatus } = useSession();
+  const [showUserMenu, setShowUserMenu] = useState(false);
 
   const {
     data: timesheets = [],
@@ -130,45 +134,17 @@ export function TimesheetDashboard() {
   const updateMutation = useUpdateTimesheet();
   const saving = createMutation.isPending || updateMutation.isPending;
 
-  const handleSave = async () => {
-    if (modalMode === "view") {
-      setModalOpen(false);
-      return;
-    }
-    if (form.week === "" || form.startDate === "" || form.endDate === "") {
-      setFormError("All fields are required.");
-      return;
-    }
-    if (form.hours === "" || Number.isNaN(Number(form.hours))) {
-      setFormError("Hours must be a number.");
-      return;
-    }
-    if (Number(form.hours) < 0 || Number(form.hours) > 168) {
-      setFormError("Hours must be between 0 and 168.");
-      return;
-    }
-    if (new Date(form.startDate) > new Date(form.endDate)) {
-      setFormError("Start date must be before end date.");
-      return;
-    }
-
-    setFormError(null);
+  const handleSave = async (values: {
+    week: number;
+    startDate: string;
+    endDate: string;
+    hours: number;
+  }) => {
     try {
       if (modalMode === "create") {
-        await createMutation.mutateAsync({
-          week: Number(form.week),
-          startDate: form.startDate,
-          endDate: form.endDate,
-          hours: Number(form.hours),
-        });
+        await createMutation.mutateAsync(values);
       } else if (modalMode === "update" && activeId) {
-        await updateMutation.mutateAsync({
-          id: activeId,
-          week: Number(form.week),
-          startDate: form.startDate,
-          endDate: form.endDate,
-          hours: Number(form.hours),
-        });
+        await updateMutation.mutateAsync({ id: activeId, ...values });
       }
       await queryClient.invalidateQueries({ queryKey: ["timesheets"] });
       setModalOpen(false);
@@ -235,14 +211,37 @@ export function TimesheetDashboard() {
       <header className="bg-surface border-b border-border">
         <div className="mx-auto flex items-center justify-between px-6 py-4">
           <div className="flex items-center gap-6">
-            <span className="text-xl font-semibold tracking-tight text-foreground">
+            <span className="text-2xl font-semibold tracking-tight text-foreground">
               ticktock
             </span>
             <nav className="text-sm font-medium text-foreground">
               Timesheets
             </nav>
           </div>
-          <div className="text-sm font-medium text-foreground">John Doe ▾</div>
+          <div className="relative">
+            <button
+              onClick={() => setShowUserMenu((v) => !v)}
+              className="text-sm font-medium text-muted-foreground hover:text-primary"
+            >
+              {sessionStatus === "loading"
+                ? "Loading..."
+                : session?.user?.name || session?.user?.email || "User"}{" "}
+              ▾
+            </button>
+            {showUserMenu && (
+              <div className="bg-surface absolute right-0 mt-2 w-40 rounded-md border border-border shadow-lg">
+                <button
+                  className="hover:bg-surface-muted flex w-full items-center px-3 py-2 text-left text-sm"
+                  onClick={() => {
+                    setShowUserMenu(false);
+                    signOut({ callbackUrl: "/" });
+                  }}
+                >
+                  Sign out
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </header>
       <main className="mx-auto max-w-6xl px-6 py-10">
@@ -277,7 +276,7 @@ export function TimesheetDashboard() {
                       setDateRange(range);
                     }}
                     numberOfMonths={2}
-                    className="rounded-lg border shadow-sm"
+                    className="bg-surface rounded-lg border shadow-sm"
                   />
                   <div className="flex justify-end gap-2 pt-2">
                     <Button
@@ -378,7 +377,7 @@ export function TimesheetDashboard() {
           <div className="px-8 pb-6">
             <div className="overflow-hidden rounded-lg border border-border">
               <table className="bg-surface min-w-full divide-y divide-border text-sm">
-                <thead className="bg-muted/60 text-xs font-semibold uppercase text-muted-foreground">
+                <thead className="bg-muted/70 text-xs font-semibold uppercase text-muted-foreground">
                   <tr>
                     <th className="px-4 py-3 text-left">
                       <span className="inline-flex items-center gap-1">
@@ -404,17 +403,17 @@ export function TimesheetDashboard() {
                   {isPending &&
                     [...Array(pageSize)].map((_, idx) => (
                       <tr key={`skeleton-${idx}`}>
-                        <td className="bg-muted/60 px-4 py-4">
-                          <div className="h-4 w-10 animate-pulse rounded bg-muted" />
+                        <td className="bg-surface px-4 py-4">
+                          <div className="h-4 w-10 animate-pulse rounded bg-muted-foreground/20" />
                         </td>
                         <td className="px-4 py-4">
-                          <div className="h-4 w-40 animate-pulse rounded bg-muted" />
+                          <div className="h-4 w-40 animate-pulse rounded bg-muted-foreground/20" />
                         </td>
                         <td className="px-4 py-4">
-                          <div className="h-5 w-24 animate-pulse rounded bg-muted" />
+                          <div className="h-5 w-24 animate-pulse rounded bg-muted-foreground/20" />
                         </td>
                         <td className="px-4 py-4">
-                          <div className="h-4 w-16 animate-pulse rounded bg-muted" />
+                          <div className="h-4 w-16 animate-pulse rounded bg-muted-foreground/20" />
                         </td>
                       </tr>
                     ))}
@@ -444,16 +443,16 @@ export function TimesheetDashboard() {
                     !isError &&
                     paginated.map((sheet) => (
                       <tr key={sheet.id} className="hover:bg-primary/5">
-                        <td className="bg-muted/60 px-4 py-4 text-foreground">
+                        <td className="bg-muted/70 px-4 py-4 text-foreground">
                           {sheet.week}
                         </td>
-                        <td className="px-4 py-4 text-foreground">
+                        <td className="bg-surface px-4 py-4 text-foreground">
                           {formatRange(sheet.startDate, sheet.endDate)}
                         </td>
-                        <td className="px-4 py-4">
+                        <td className="bg-surface px-4 py-4">
                           <StatusBadge status={sheet.status} />
                         </td>
-                        <td className="px-4 py-4 text-primary">
+                        <td className="bg-surface px-4 py-4 text-primary">
                           <ActionButton
                             label={actionLabel(sheet.status)}
                             onClick={() => navigateToWeekTimesheet(sheet.id)}
@@ -469,7 +468,7 @@ export function TimesheetDashboard() {
               <div className="relative">
                 <button
                   onClick={() => setShowRowsMenu((v) => !v)}
-                  className="border-border-strong flex items-center gap-2 rounded-md border bg-muted/60 px-3 py-2 text-sm text-foreground shadow-sm"
+                  className="border-border-strong flex items-center gap-2 rounded-md border bg-muted/70 px-3 py-2 text-sm text-foreground shadow-sm"
                 >
                   {pageSize} per page{" "}
                   <span className="text-muted-foreground">▾</span>
@@ -562,88 +561,27 @@ export function TimesheetDashboard() {
         }
         onClose={() => setModalOpen(false)}
       >
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">
-                Week #
-              </label>
-              <Input
-                type="number"
-                min={1}
-                value={form.week}
-                onChange={(e) =>
-                  setForm((prev) => ({ ...prev, week: Number(e.target.value) }))
-                }
-                disabled={modalMode === "view"}
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">
-                Hours
-              </label>
-              <Input
-                type="number"
-                min={0}
-                max={168}
-                value={form.hours}
-                onChange={(e) =>
-                  setForm((prev) => ({
-                    ...prev,
-                    hours: Number(e.target.value),
-                  }))
-                }
-                disabled={modalMode === "view"}
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">
-                Start date
-              </label>
-              <Input
-                type="date"
-                value={form.startDate}
-                onChange={(e) =>
-                  setForm((prev) => ({ ...prev, startDate: e.target.value }))
-                }
-                disabled={modalMode === "view"}
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">
-                End date
-              </label>
-              <Input
-                type="date"
-                value={form.endDate}
-                onChange={(e) =>
-                  setForm((prev) => ({ ...prev, endDate: e.target.value }))
-                }
-                disabled={modalMode === "view"}
-              />
-            </div>
-          </div>
-
-          {formError && (
-            <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-              {formError}
-            </div>
-          )}
-
-          <div className="flex justify-end gap-3">
-            <Button variant="ghost" onClick={() => setModalOpen(false)}>
-              Close
-            </Button>
-            {modalMode !== "view" && (
-              <Button onClick={handleSave} disabled={saving}>
-                {saving ? "Saving..." : "Save"}
-              </Button>
-            )}
-          </div>
-        </div>
+        <TimesheetForm
+          mode={modalMode}
+          submitting={saving}
+          error={formError}
+          initialValues={{
+            week: form.week || undefined,
+            hours: form.hours || undefined,
+            startDate: form.startDate || undefined,
+            endDate: form.endDate || undefined,
+          }}
+          onSubmit={(vals) => {
+            setForm({
+              week: vals.week,
+              hours: vals.hours,
+              startDate: vals.startDate,
+              endDate: vals.endDate,
+            });
+            return handleSave(vals);
+          }}
+          onClose={() => setModalOpen(false)}
+        />
       </Modal>
     </div>
   );

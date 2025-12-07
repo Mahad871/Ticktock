@@ -31,7 +31,7 @@
   --status-success-bg: 144 54% 93%; /* #e4f6ed */
   --status-success-fg: 158 53% 41%; /* #2f9b76 */
   --status-warn-bg: 48 100% 93%; /* #fff7d8 */
-  --status-warn-fg: 52 100% 39%; /* #c6a300 */
+  --status-warn-fg: 21 100% 65%; /* #c6a300 */
   --status-danger-bg: 333 100% 95%; /* #ffe5f1 */
   --status-danger-fg: 333 53% 50%; /* #c3407b */
 }
@@ -63,7 +63,7 @@
   --status-success-bg: 153 34% 18%;
   --status-success-fg: 144 55% 70%;
   --status-warn-bg: 42 80% 18%;
-  --status-warn-fg: 50 90% 70%;
+  --status-warn-fg: 21 100% 65%;
   --status-danger-bg: 330 40% 20%;
   --status-danger-fg: 333 60% 75%;
 }

@@ -4,6 +4,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { MoreHorizontal, Plus } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
+import { signOut, useSession } from "next-auth/react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -55,7 +56,7 @@ function ProgressBar({ value, max }: { value: number; max: number }) {
         <div className="relative h-1.5 rounded-full bg-border">
           {/* dynamic width for progress bar */}
           <div
-            className="absolute left-0 top-0 h-1.5 rounded-full bg-primary"
+            className="bg-status-warn-foreground absolute left-0 top-0 h-1.5 rounded-full"
             style={{ width: `${pct}%` }}
           />
         </div>
@@ -181,6 +182,7 @@ function Modal({
 }
 
 export function WeekTimesheet({ timesheetId = "4" }: WeekTimesheetProps) {
+  const { data: session, status: sessionStatus } = useSession();
   const [timesheetRange, setTimesheetRange] = useState("21 - 26 January, 2024");
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [selectedDayId, setSelectedDayId] = useState<string | null>(null);
@@ -195,6 +197,7 @@ export function WeekTimesheet({ timesheetId = "4" }: WeekTimesheetProps) {
 
   const [error, setError] = useState<string | null>(null);
   const queryClient = useQueryClient();
+  const [showUserMenu, setShowUserMenu] = useState(false);
 
   const {
     data: sheet,
@@ -331,16 +334,39 @@ export function WeekTimesheet({ timesheetId = "4" }: WeekTimesheetProps) {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <header className="bg-surface border-b border-border">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+        <div className="mx-auto flex items-center justify-between px-6 py-4">
           <div className="flex items-center gap-6">
-            <span className="text-xl font-semibold tracking-tight text-foreground">
+            <span className="text-2xl font-semibold tracking-tight text-foreground">
               ticktock
             </span>
             <nav className="text-sm font-medium text-foreground">
               Timesheets
             </nav>
           </div>
-          <div className="text-sm font-medium text-foreground">John Doe ▾</div>
+          <div className="relative">
+            <button
+              onClick={() => setShowUserMenu((v) => !v)}
+              className="text-sm font-medium text-muted-foreground hover:text-primary"
+            >
+              {sessionStatus === "loading"
+                ? "Loading..."
+                : session?.user?.name || session?.user?.email || "User"}{" "}
+              ▾
+            </button>
+            {showUserMenu && (
+              <div className="bg-surface absolute right-0 mt-2 w-40 rounded-md border border-border shadow-lg">
+                <button
+                  className="hover:bg-surface-muted flex w-full items-center px-3 py-2 text-left text-sm"
+                  onClick={() => {
+                    setShowUserMenu(false);
+                    signOut({ callbackUrl: "/" });
+                  }}
+                >
+                  Sign out
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </header>
 
@@ -363,13 +389,13 @@ export function WeekTimesheet({ timesheetId = "4" }: WeekTimesheetProps) {
               <>
                 {[...Array(5)].map((_, idx) => (
                   <div key={`skeleton-day-${idx}`} className="space-y-3">
-                    <div className="h-4 w-24 animate-pulse rounded bg-muted" />
+                    <div className="h-4 w-24 animate-pulse rounded bg-muted-foreground/20" />
                     {[...Array(2)].map((__, jdx) => (
                       <div
                         key={`row-${idx}-${jdx}`}
                         className="border-border-strong bg-surface flex items-center gap-3 rounded-md border border-dashed px-3 py-4"
                       >
-                        <div className="h-4 w-32 animate-pulse rounded bg-muted" />
+                        <div className="h-4 w-32 animate-pulse rounded bg-muted-foreground/20" />
                       </div>
                     ))}
                     <div className="border-border-strong h-10 w-full animate-pulse rounded-md border border-dashed bg-muted" />
