@@ -9,15 +9,14 @@ type WeekPageSearchParams = {
   timesheetId?: string;
 };
 
-export default async function WeekPage({
-  searchParams,
-}: {
-  searchParams?: WeekPageSearchParams;
+export default async function WeekPage(props: {
+  searchParams?: Promise<WeekPageSearchParams>;
 }) {
   const session = await auth();
   if (!session?.user) {
     redirect("/");
   }
+  const searchParams = await props.searchParams;
   const timesheetId =
     searchParams?.week ?? searchParams?.id ?? searchParams?.timesheetId;
   return <WeekTimesheet timesheetId={timesheetId} />;

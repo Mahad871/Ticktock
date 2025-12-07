@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 import { auth } from "@/auth";
 import { EntryPayloadSchema } from "@/lib/schemas";
@@ -8,6 +8,8 @@ import {
   type TimesheetEntry,
 } from "@/lib/timesheet-entries";
 import { getTimesheet, updateTimesheet } from "@/lib/timesheets";
+
+type RouteContext = { params: Promise<{ id: string }> };
 
 function recomputeTimesheetHours(timesheetId: string) {
   const sheet = getTimesheet(timesheetId);
@@ -24,33 +26,29 @@ function recomputeTimesheetHours(timesheetId: string) {
   });
 }
 
-export async function GET(
-  _request: Request,
-  { params }: { params: { id: string } },
-) {
+export async function GET(_request: NextRequest, context: RouteContext) {
+  const { id } = await context.params;
   const session = await auth();
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const sheet = getTimesheet(params.id);
+  const sheet = getTimesheet(id);
   if (!sheet) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
-  const data = listEntries(params.id);
+  const data = listEntries(id);
   return NextResponse.json({ data });
 }
 
-export async function POST(
-  request: Request,
-  { params }: { params: { id: string } },
-) {
+export async function POST(request: NextRequest, context: RouteContext) {
+  const { id } = await context.params;
   const session = await auth();
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const sheet = getTimesheet(params.id);
+  const sheet = getTimesheet(id);
   if (!sheet) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
@@ -63,9 +61,9 @@ export async function POST(
     );
   }
 
-  const entry: TimesheetEntry = addEntry(params.id, parsed.data);
+  const entry: TimesheetEntry = addEntry(id, parsed.data);
 
-  recomputeTimesheetHours(params.id);
+  recomputeTimesheetHours(id);
 
   return NextResponse.json({ data: entry }, { status: 201 });
 }

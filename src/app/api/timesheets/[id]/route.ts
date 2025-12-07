@@ -1,35 +1,33 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 import { auth } from "@/auth";
 import { TimesheetPayloadSchema } from "@/lib/schemas";
 import { getTimesheet, updateTimesheet } from "@/lib/timesheets";
 
-export async function GET(
-  _request: Request,
-  { params }: { params: { id: string } },
-) {
+type RouteContext = { params: Promise<{ id: string }> };
+
+export async function GET(_request: NextRequest, context: RouteContext) {
+  const { id } = await context.params;
   const session = await auth();
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const sheet = getTimesheet(params.id);
+  const sheet = getTimesheet(id);
   if (!sheet) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
   return NextResponse.json({ data: sheet });
 }
 
-export async function PUT(
-  request: Request,
-  { params }: { params: { id: string } },
-) {
+export async function PUT(request: NextRequest, context: RouteContext) {
+  const { id } = await context.params;
   const session = await auth();
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const existing = getTimesheet(params.id);
+  const existing = getTimesheet(id);
   if (!existing) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
@@ -43,6 +41,6 @@ export async function PUT(
     );
   }
 
-  const updated = updateTimesheet(params.id, parsed.data);
+  const updated = updateTimesheet(id, parsed.data);
   return NextResponse.json({ data: updated });
 }
