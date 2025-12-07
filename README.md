@@ -7,7 +7,7 @@ Timesheet dashboard built with Next.js 16 (App Router), React 19, and TailwindCS
 - Requirements: Node.js 20+ and npm.
 - Install dependencies: `npm install`.
 - Project setup:
-  1. Copy `.env.local.example` (or create `.env.local`) with:
+  1. Create `.env.local` with:
      ```
      # .env.local
      AUTH_SECRET=change-me
