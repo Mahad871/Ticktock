@@ -253,7 +253,7 @@ export function TimesheetDashboard() {
           <div className="text-sm font-medium text-[#0f1729]">John Doe ▾</div>
         </div>
       </header>
-
+      s
       <main className="mx-auto max-w-6xl px-6 py-10">
         <div className="rounded-2xl border border-[#e7ebf3] bg-white shadow-sm">
           <div className="flex flex-wrap items-center gap-4 px-8 py-6">
@@ -383,8 +383,8 @@ export function TimesheetDashboard() {
 
           <div className="px-8 pb-6">
             <div className="overflow-hidden rounded-lg border border-[#e7ebf3]">
-              <table className="min-w-full divide-y divide-[#e7ebf3] text-sm">
-                <thead className="bg-white text-xs font-semibold uppercase text-[#6b7280]">
+              <table className="min-w-full divide-y divide-[#e7ebf3] bg-white text-sm">
+                <thead className="bg-muted/60 text-xs font-semibold uppercase text-[#6b7280]">
                   <tr>
                     <th className="px-4 py-3 text-left">
                       <span className="inline-flex items-center gap-1">
@@ -438,8 +438,8 @@ export function TimesheetDashboard() {
                   {!loading &&
                     !error &&
                     paginated.map((sheet) => (
-                      <tr key={sheet.id} className="hover:bg-[#f9fafb]">
-                        <td className="px-4 py-4 text-[#0f1729]">
+                      <tr key={sheet.id} className="hover:bg-primary/5">
+                        <td className="bg-muted/60 px-4 py-4 text-[#0f1729]">
                           {sheet.week}
                         </td>
                         <td className="px-4 py-4 text-[#0f1729]">
@@ -471,7 +471,7 @@ export function TimesheetDashboard() {
               <div className="relative">
                 <button
                   onClick={() => setShowRowsMenu((v) => !v)}
-                  className="flex items-center gap-2 rounded-md border border-[#d7dce5] bg-white px-3 py-2 text-sm text-[#0f1729] shadow-sm"
+                  className="flex items-center gap-2 rounded-md border border-[#d7dce5] bg-muted/60 px-3 py-2 text-sm text-[#0f1729] shadow-sm"
                 >
                   {pageSize} per page <span className="text-[#6b7280]">▾</span>
                 </button>
@@ -553,7 +553,6 @@ export function TimesheetDashboard() {
           © 2024 tentwenty. All rights reserved.
         </div>
       </main>
-
       <Modal
         open={modalOpen}
         title={
