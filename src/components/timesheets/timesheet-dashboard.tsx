@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { format } from "date-fns";
 import { type DateRange } from "react-day-picker";
 import { useRouter } from "next/navigation";
@@ -115,7 +115,7 @@ export function TimesheetDashboard() {
   const [saving, setSaving] = useState(false);
   const router = useRouter();
 
-  const fetchTimesheets = async () => {
+  const fetchTimesheets = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -136,12 +136,11 @@ export function TimesheetDashboard() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [endDate, startDate, statusFilter]);
 
   useEffect(() => {
     fetchTimesheets();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [fetchTimesheets]);
 
   const handleSave = async () => {
     if (modalMode === "view") {
@@ -224,6 +223,33 @@ export function TimesheetDashboard() {
     setPage(target);
   };
 
+  const hasFilters =
+    Boolean(startDate) || Boolean(endDate) || statusFilter !== "ALL";
+
+  const visiblePages = useMemo<(number | "ellipsis")[]>(() => {
+    const pages: (number | "ellipsis")[] = [];
+    const addRange = (start: number, end: number) => {
+      for (let i = start; i <= end; i++) pages.push(i);
+    };
+
+    if (totalPages <= 10) {
+      addRange(1, totalPages);
+      return pages;
+    }
+
+    const siblings = 1;
+    const start = Math.max(2, page - siblings);
+    const end = Math.min(totalPages - 1, page + siblings);
+
+    pages.push(1);
+    if (start > 2) pages.push("ellipsis");
+    addRange(start, end);
+    if (end < totalPages - 1) pages.push("ellipsis");
+    pages.push(totalPages);
+
+    return pages;
+  }, [page, totalPages]);
+
   return (
     <div className="min-h-screen bg-[#f7f8fb] text-[#0f1729]">
       <header className="border-b border-[#e7ebf3] bg-white">
@@ -238,7 +264,7 @@ export function TimesheetDashboard() {
         </div>
       </header>
       <main className="mx-auto max-w-6xl px-6 py-10">
-        <div className="rounded-2xl border border-[#e7ebf3] bg-white shadow-sm">
+        <div className="rounded-xl border border-[#e7ebf3] bg-white shadow-sm">
           <div className="flex flex-wrap items-center gap-4 px-8 py-6">
             <h1 className="text-2xl font-semibold text-[#0f1729]">
               Your Timesheets
@@ -267,10 +293,6 @@ export function TimesheetDashboard() {
                     selected={dateRange}
                     onSelect={(range) => {
                       setDateRange(range);
-                      if (range?.from)
-                        setStartDate(range.from.toISOString().slice(0, 10));
-                      if (range?.to)
-                        setEndDate(range.to.toISOString().slice(0, 10));
                     }}
                     numberOfMonths={2}
                     className="rounded-lg border shadow-sm"
@@ -284,6 +306,7 @@ export function TimesheetDashboard() {
                         setStartDate("");
                         setEndDate("");
                         setShowRangePicker(false);
+                        fetchTimesheets();
                       }}
                     >
                       Clear
@@ -291,6 +314,12 @@ export function TimesheetDashboard() {
                     <Button
                       size="sm"
                       onClick={() => {
+                        if (dateRange?.from)
+                          setStartDate(
+                            dateRange.from.toISOString().slice(0, 10),
+                          );
+                        if (dateRange?.to)
+                          setEndDate(dateRange.to.toISOString().slice(0, 10));
                         setShowRangePicker(false);
                         fetchTimesheets();
                       }}
@@ -335,7 +364,7 @@ export function TimesheetDashboard() {
                     >
                       {opt.label}
                       {statusFilter === opt.value && (
-                        <span className="text-[#1f63f0]">•</span>
+                        <span className="text-primary">•</span>
                       )}
                     </button>
                   ))}
@@ -343,25 +372,22 @@ export function TimesheetDashboard() {
               )}
             </div>
 
-            <Button
-              variant="outline"
-              onClick={fetchTimesheets}
-              className="h-10"
-            >
-              Apply filters
-            </Button>
-            <Button
-              variant="ghost"
-              onClick={() => {
-                setStartDate("");
-                setEndDate("");
-                setStatusFilter("ALL");
-                fetchTimesheets();
-              }}
-              className="h-10"
-            >
-              Reset
-            </Button>
+            {hasFilters && (
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  setDateRange(undefined);
+                  setStartDate("");
+                  setEndDate("");
+                  setStatusFilter("ALL");
+                  setShowRangePicker(false);
+                  setShowStatusMenu(false);
+                }}
+                className="h-10"
+              >
+                Clear filters
+              </Button>
+            )}
           </div>
 
           <div className="px-8 pb-6">
@@ -431,7 +457,7 @@ export function TimesheetDashboard() {
                         <td className="px-4 py-4">
                           <StatusBadge status={sheet.status} />
                         </td>
-                        <td className="px-4 py-4 text-[#1f63f0]">
+                        <td className="px-4 py-4 text-primary">
                           <ActionButton
                             label={actionLabel(sheet.status)}
                             onClick={() => navigateToWeekTimesheet(sheet.id)}
@@ -465,7 +491,7 @@ export function TimesheetDashboard() {
                       >
                         {n} per page
                         {pageSize === n && (
-                          <span className="text-[#1f63f0]">•</span>
+                          <span className="text-primary">•</span>
                         )}
                       </button>
                     ))}
@@ -473,50 +499,50 @@ export function TimesheetDashboard() {
                 )}
               </div>
 
-              <div className="flex items-center gap-1">
+              <div className="flex items-center overflow-hidden rounded-md border border-[#e7ebf3] bg-white text-sm text-[#4b5563] shadow-sm">
                 <button
                   onClick={() => goToPage(page - 1)}
                   disabled={page === 1}
-                  className="rounded-md px-3 py-2 text-[#6b7280] hover:bg-[#f1f3f7] disabled:opacity-50"
+                  className={cn(
+                    "px-3 py-2 text-[#4b5563] hover:text-primary",
+                    "border-r border-[#e7ebf3]",
+                    "disabled:cursor-not-allowed disabled:text-[#c0c4cf]",
+                  )}
                 >
                   Previous
                 </button>
-                {Array.from({ length: totalPages }, (_, i) => i + 1)
-                  .slice(0, 7)
-                  .map((p) => (
+                {visiblePages.map((p, idx) =>
+                  p === "ellipsis" ? (
+                    <span
+                      key={`ellipsis-${idx}`}
+                      className="border-r border-[#e7ebf3] px-3 py-2 text-[#9aa3b5]"
+                    >
+                      ...
+                    </span>
+                  ) : (
                     <button
                       key={p}
                       onClick={() => goToPage(p)}
                       className={cn(
-                        "min-w-[36px] rounded-md px-3 py-2 text-sm",
+                        "px-3 py-2 text-sm",
+                        idx !== visiblePages.length - 1 &&
+                          "border-r border-[#e7ebf3]",
                         p === page
-                          ? "bg-[#e7ebf3] font-semibold text-[#0f1729]"
-                          : "text-[#0f1729] hover:bg-[#f1f3f7]",
+                          ? "font-semibold text-primary"
+                          : "text-[#4b5563] hover:text-primary",
                       )}
                     >
                       {p}
                     </button>
-                  ))}
-                {totalPages > 7 && (
-                  <>
-                    <span className="px-2 text-[#6b7280]">...</span>
-                    <button
-                      onClick={() => goToPage(totalPages)}
-                      className={cn(
-                        "min-w-[36px] rounded-md px-3 py-2 text-sm",
-                        page === totalPages
-                          ? "bg-[#e7ebf3] font-semibold text-[#0f1729]"
-                          : "text-[#0f1729] hover:bg-[#f1f3f7]",
-                      )}
-                    >
-                      {totalPages}
-                    </button>
-                  </>
+                  ),
                 )}
                 <button
                   onClick={() => goToPage(page + 1)}
                   disabled={page === totalPages}
-                  className="rounded-md px-3 py-2 text-[#6b7280] hover:bg-[#f1f3f7] disabled:opacity-50"
+                  className={cn(
+                    "px-3 py-2 text-[#4b5563] hover:text-primary",
+                    "disabled:cursor-not-allowed disabled:text-[#c0c4cf]",
+                  )}
                 >
                   Next
                 </button>
@@ -525,7 +551,7 @@ export function TimesheetDashboard() {
           </div>
         </div>
 
-        <div className="mt-6 rounded-2xl border border-[#e7ebf3] bg-white px-8 py-6 text-center text-sm text-[#6b7280] shadow-sm">
+        <div className="mt-6 rounded-xl border border-[#e7ebf3] bg-white px-8 py-6 text-center text-sm text-[#6b7280] shadow-sm">
           © 2024 tentwenty. All rights reserved.
         </div>
       </main>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { MoreHorizontal, Plus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -65,6 +65,20 @@ function TaskRow({
   onEdit: () => void;
   onDelete: () => void;
 }) {
+  const [open, setOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const handler = (evt: MouseEvent) => {
+      if (!open) return;
+      if (menuRef.current && !menuRef.current.contains(evt.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
+
   return (
     <div className="flex items-center gap-3 rounded-md border border-dashed border-[#d7dce5] bg-white px-3 py-2">
       <div className="flex-1 text-sm text-[#0f1729]">{task.description}</div>
@@ -77,17 +91,35 @@ function TaskRow({
           <button
             className="rounded px-1 py-1 text-[#6b7280] hover:bg-[#f1f3f7]"
             aria-label="More"
+            onClick={() => setOpen((v) => !v)}
           >
             <MoreHorizontal className="h-4 w-4" />
           </button>
-          <div className="flex gap-3 text-xs font-medium text-[#1f63f0]">
-            <button onClick={onEdit} className="hover:underline">
-              Edit
-            </button>
-            <button onClick={onDelete} className="hover:underline">
-              Delete
-            </button>
-          </div>
+          {open && (
+            <div
+              ref={menuRef}
+              className="absolute right-0 top-8 z-20 flex flex-col rounded-lg border border-[#e7ebf3] bg-white py-1 pr-6 shadow-lg"
+            >
+              <button
+                className="flex w-full items-center px-2 py-2 text-left text-sm text-muted-foreground hover:bg-[#f7f9fd]"
+                onClick={() => {
+                  setOpen(false);
+                  onEdit();
+                }}
+              >
+                Edit
+              </button>
+              <button
+                className="flex w-full items-center px-2 py-2 text-left text-sm text-[#d92c2c] hover:bg-[#fff5f5]"
+                onClick={() => {
+                  setOpen(false);
+                  onDelete();
+                }}
+              >
+                Delete
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -98,7 +130,7 @@ function AddTaskRow({ onAdd }: { onAdd: () => void }) {
   return (
     <button
       onClick={onAdd}
-      className="flex w-full items-center justify-center gap-2 rounded-md border border-dashed border-[#d7dce5] bg-[#f9fafb] px-3 py-2 text-sm font-medium text-[#1f63f0] hover:bg-[#f1f3f7]"
+      className="flex w-full items-center justify-center gap-2 rounded-md border border-dashed border-[#d7dce5] bg-[#f9fafb] px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-primary/10 hover:text-primary"
     >
       <Plus className="h-4 w-4" />
       Add new task
