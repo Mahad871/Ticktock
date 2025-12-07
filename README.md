@@ -6,12 +6,16 @@ Timesheet dashboard built with Next.js 15 (App Router), React 19, and TailwindCS
 
 - Requirements: Node.js 20+ and npm.
 - Install dependencies: `npm install`.
-- Create `.env.local` with:
-  - `AUTH_SECRET=change-me`
-  - `NEXTAUTH_URL=http://localhost:3000`
-- Run the dev server: `npm run dev` (http://localhost:3000).
-- Production build/start: `npm run build` then `npm start`.
-- Quality checks: `npm run lint` (ESLint) and `npm run test` (Vitest + Testing Library).
+- Project setup:
+  1. Copy `.env.local.example` (or create `.env.local`) with:
+     ```
+     # .env.local
+     AUTH_SECRET=change-me
+     NEXTAUTH_URL=http://localhost:3000
+     ```
+  2. Run the dev server: `npm run dev` (http://localhost:3000).
+  3. Production build/start: `npm run build` then `npm start`.
+  4. Quality checks: `npm run lint` (ESLint) and `npm run test` (Vitest + Testing Library).
 
 ## Frameworks & libraries
 

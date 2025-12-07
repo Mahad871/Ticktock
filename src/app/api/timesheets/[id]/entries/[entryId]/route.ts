@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 import { auth } from "@/auth";
 import { EntryPayloadSchema } from "@/lib/schemas";
@@ -26,7 +26,7 @@ function recomputeTimesheetHours(timesheetId: string) {
 }
 
 export async function PUT(
-  request: Request,
+  request: NextRequest,
   { params }: { params: { id: string; entryId: string } },
 ) {
   const session = await auth();
@@ -59,7 +59,7 @@ export async function PUT(
 }
 
 export async function DELETE(
-  _request: Request,
+  _request: NextRequest,
   { params }: { params: { id: string; entryId: string } },
 ) {
   const session = await auth();
