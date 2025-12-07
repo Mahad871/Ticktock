@@ -66,9 +66,9 @@ function UserMenu() {
         <div className="bg-surface absolute right-0 mt-2 w-40 rounded-md border border-border shadow-lg">
           <button
             className="hover:bg-surface-muted flex w-full items-center px-3 py-2 text-left text-sm"
-            onClick={() => {
+            onClick={async () => {
               setOpen(false);
-              signOut({ callbackUrl: "/" });
+              await signOut({ callbackUrl: "/", redirect: true });
             }}
           >
             Sign out

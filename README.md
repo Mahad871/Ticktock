@@ -1,6 +1,6 @@
 # Ticktock
 
-Timesheet dashboard built with Next.js 15 (App Router), React 19, and TailwindCSS.
+Timesheet dashboard built with Next.js 16 (App Router), React 19, and TailwindCSS.
 
 ## Setup
 
@@ -17,9 +17,17 @@ Timesheet dashboard built with Next.js 15 (App Router), React 19, and TailwindCS
   3. Production build/start: `npm run build` then `npm start`.
   4. Quality checks: `npm run lint` (ESLint) and `npm run test` (Vitest + Testing Library).
 
+## Demo Account
+
+| Email            | Password   |
+| ---------------- | ---------- |
+| demo@example.com | `password` |
+
+> Any email works with password `password` — this is a demo-only credentials flow.
+
 ## Frameworks & libraries
 
-- Next.js 15 App Router, React 19, TypeScript
+- Next.js 16 App Router, React 19, TypeScript
 - TailwindCSS 3 + tailwindcss-animate
 - shadcn/ui primitives (Radix-based) in `src/components/ui`
 - NextAuth credentials provider

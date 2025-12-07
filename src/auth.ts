@@ -4,6 +4,10 @@ import type { JWT } from "next-auth/jwt";
 import { mockUsers } from "@/lib/mock-data";
 
 export const authConfig = {
+  pages: {
+    signIn: "/",
+    signOut: "/",
+  },
   session: {
     strategy: "jwt" as const,
   },
