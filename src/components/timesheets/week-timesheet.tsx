@@ -382,8 +382,8 @@ export function WeekTimesheet({ timesheetId = "4" }: WeekTimesheetProps) {
   };
 
   return (
-    <AppShell contentClassName="px-4 py-8 sm:px-6">
-      <div className="bg-surface rounded-xl border border-border shadow-sm">
+    <AppShell contentClassName="mx-auto overflow-x-hidden py-8 sm:px-0">
+      <div className="bg-surface w-full rounded-xl border border-border shadow-sm">
         <div className="flex flex-col gap-3 border-b border-border px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
           <div className="space-y-1">
             <h1 className="text-lg font-semibold text-foreground">

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { Info } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -98,7 +99,7 @@ export function AddEntryDialog({
         role="dialog"
         aria-modal="true"
         aria-label="Add entry"
-        className="bg-surface w-full max-w-3xl rounded-md border border-border shadow-2xl outline-none"
+        className="bg-surface w-full max-w-xl rounded-lg border border-border shadow-2xl outline-none"
       >
         <div className="flex items-center justify-between border-b border-border px-6 py-4">
           <h2 className="text-lg font-semibold text-foreground">
@@ -116,8 +117,20 @@ export function AddEntryDialog({
         <div className="space-y-6 px-6 py-6">
           <div className="space-y-2">
             <div className="flex items-center gap-1 text-sm font-medium text-foreground">
-              Select Project{" "}
-              <span className="text-status-danger-foreground">*</span>
+              <span className="inline-flex items-center gap-1">
+                Select Project{" "}
+                <span className="text-status-danger-foreground">*</span>
+              </span>
+              <span
+                className="inline-flex items-center"
+                title="Choose the project this task belongs to."
+              >
+                <Info
+                  className="h-3.5 w-3.5 text-muted-foreground"
+                  aria-label="Project info"
+                  role="img"
+                />
+              </span>
             </div>
             <Select value={project} onValueChange={setProject}>
               <SelectTrigger>
@@ -135,8 +148,20 @@ export function AddEntryDialog({
 
           <div className="space-y-2">
             <div className="flex items-center gap-1 text-sm font-medium text-foreground">
-              Type of Work{" "}
-              <span className="text-status-danger-foreground">*</span>
+              <span className="inline-flex items-center gap-1">
+                Type of Work{" "}
+                <span className="text-status-danger-foreground">*</span>
+              </span>
+              <span
+                className="inline-flex items-center"
+                title="Pick the category that best describes this task."
+              >
+                <Info
+                  className="h-3.5 w-3.5 text-muted-foreground"
+                  aria-label="Type of work info"
+                  role="img"
+                />
+              </span>
             </div>
             <Select value={typeOfWork} onValueChange={setTypeOfWork}>
               <SelectTrigger>
@@ -187,13 +212,15 @@ export function AddEntryDialog({
           )}
         </div>
 
-        <div className="bg-surface-muted flex items-center justify-end gap-3 border-t border-border px-6 py-4">
-          <Button variant="ghost" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button onClick={handleSave} disabled={saving}>
-            {saving ? "Saving..." : "Add entry"}
-          </Button>
+        <div className="bg-surface-muted border-t border-border px-4 py-4 sm:px-6">
+          <div className="grid grid-cols-2 gap-3">
+            <Button onClick={handleSave} disabled={saving} className="w-full">
+              {saving ? "Saving..." : "Add entry"}
+            </Button>
+            <Button variant="outline" onClick={onClose} className="w-full">
+              Cancel
+            </Button>
+          </div>
         </div>
       </div>
     </div>

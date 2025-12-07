@@ -26,32 +26,39 @@ export function InputCounter({
   const clamp = (v: number) => Math.min(max, Math.max(min, v));
 
   return (
-    <div className={cn("flex items-center gap-2", className)}>
+    <div
+      className={cn(
+        "flex items-stretch overflow-hidden rounded-lg border border-border/80 bg-muted/40 shadow-sm",
+        className,
+      )}
+    >
       <Button
         type="button"
-        variant="outline"
+        variant="ghost"
         size="icon"
-        className="border-border-strong h-9 w-9 rounded-md border text-foreground shadow-sm"
+        aria-label="Decrease hours"
+        className="h-11 min-w-[24px] rounded-none border-r border-border/60 bg-muted px-3 text-muted-foreground"
         onClick={() => onChange(clamp(value - step))}
         disabled={value <= min}
       >
-        <Minus className="h-4 w-4" />
+        <Minus className="h-4 w-4" aria-hidden />
       </Button>
       <Input
         type="number"
         value={value}
         onChange={(e) => onChange(clamp(Number(e.target.value)))}
-        className="border-border-strong h-9 w-16 rounded-md border text-center text-sm text-foreground shadow-sm"
+        className="h-11 w-20 border-none bg-transparent text-center text-base font-medium text-foreground shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
       />
       <Button
         type="button"
-        variant="outline"
+        variant="ghost"
         size="icon"
-        className="border-border-strong h-9 w-9 rounded-md border text-foreground shadow-sm"
+        aria-label="Increase hours"
+        className="h-11 min-w-[24px] rounded-none border-l border-border/60 bg-muted px-3 text-muted-foreground"
         onClick={() => onChange(clamp(value + step))}
         disabled={value >= max}
       >
-        <Plus className="h-4 w-4" />
+        <Plus className="h-4 w-4" aria-hidden />
       </Button>
     </div>
   );

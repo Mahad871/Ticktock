@@ -32,11 +32,13 @@ export function AppShell({
         </div>
       </header>
 
-      <main className={cn("mx-auto max-w-6xl px-6 py-10", contentClassName)}>
+      <main
+        className={cn("mx-auto max-w-6xl px-6 py-10 sm:px-0", contentClassName)}
+      >
         {children}
       </main>
 
-      <footer className="bg-surface mt-6 border-t border-border px-8 py-6 text-center text-sm text-muted-foreground shadow-sm">
+      <footer className="bg-surface mx-6 mb-6 max-w-6xl rounded-lg border border-border px-6 py-6 text-center text-sm text-muted-foreground shadow-sm sm:mx-auto sm:px-0">
         © 2024 tentwenty. All rights reserved.
       </footer>
     </div>
