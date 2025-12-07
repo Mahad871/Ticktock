@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { MoreHorizontal, Plus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -30,6 +30,10 @@ type FormState = {
   hours: number | "";
   dayId: string;
   date?: string;
+};
+
+type WeekTimesheetProps = {
+  timesheetId?: string;
 };
 
 function ProgressBar({ value, max }: { value: number; max: number }) {
@@ -133,10 +137,9 @@ function Modal({
   );
 }
 
-export function WeekTimesheet() {
+export function WeekTimesheet({ timesheetId = "4" }: WeekTimesheetProps) {
   const [days, setDays] = useState<DayEntry[]>([]);
   const [timesheetRange, setTimesheetRange] = useState("21 - 26 January, 2024");
-  const [timesheetId] = useState("4");
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [selectedDayId, setSelectedDayId] = useState<string | null>(null);
 
@@ -182,7 +185,7 @@ export function WeekTimesheet() {
     setDays(result);
   };
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       const sheet = await apiFetch<{
         data: { startDate: string; endDate: string };
@@ -206,12 +209,11 @@ export function WeekTimesheet() {
     } catch {
       // ignore errors for mock data
     }
-  };
+  }, [timesheetId]);
 
   useEffect(() => {
     loadData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [loadData]);
 
   const openCreate = (dayId: string) => {
     setSelectedDayId(dayId);

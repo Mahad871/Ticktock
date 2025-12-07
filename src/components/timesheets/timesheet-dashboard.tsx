@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { format } from "date-fns";
 import { type DateRange } from "react-day-picker";
+import { useRouter } from "next/navigation";
 
 import { StatusBadge } from "@/components/timesheets/status-badge";
 import { Button } from "@/components/ui/button";
@@ -112,6 +113,7 @@ export function TimesheetDashboard() {
   });
   const [formError, setFormError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const router = useRouter();
 
   const fetchTimesheets = async () => {
     setLoading(true);
@@ -140,28 +142,6 @@ export function TimesheetDashboard() {
     fetchTimesheets();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const openModal = (mode: ModalMode, sheet?: Timesheet) => {
-    setModalMode(mode);
-    setActiveId(sheet?.id ?? null);
-    if (sheet) {
-      setForm({
-        week: sheet.week,
-        startDate: sheet.startDate,
-        endDate: sheet.endDate,
-        hours: sheet.hours,
-      });
-    } else {
-      setForm({
-        week: "",
-        startDate: "",
-        endDate: "",
-        hours: "",
-      });
-    }
-    setFormError(null);
-    setModalOpen(true);
-  };
 
   const handleSave = async () => {
     if (modalMode === "view") {
@@ -226,6 +206,10 @@ export function TimesheetDashboard() {
     return "View";
   };
 
+  const navigateToWeekTimesheet = (timesheetId: string) => {
+    router.push(`/dashboard/week?week=${timesheetId}`);
+  };
+
   const totalPages = Math.max(
     1,
     Math.ceil((timesheets.length || 1) / pageSize),
@@ -253,7 +237,6 @@ export function TimesheetDashboard() {
           <div className="text-sm font-medium text-[#0f1729]">John Doe ▾</div>
         </div>
       </header>
-      s
       <main className="mx-auto max-w-6xl px-6 py-10">
         <div className="rounded-2xl border border-[#e7ebf3] bg-white shadow-sm">
           <div className="flex flex-wrap items-center gap-4 px-8 py-6">
@@ -451,14 +434,7 @@ export function TimesheetDashboard() {
                         <td className="px-4 py-4 text-[#1f63f0]">
                           <ActionButton
                             label={actionLabel(sheet.status)}
-                            onClick={() =>
-                              openModal(
-                                sheet.status === "COMPLETED"
-                                  ? "view"
-                                  : "update",
-                                sheet,
-                              )
-                            }
+                            onClick={() => navigateToWeekTimesheet(sheet.id)}
                           />
                         </td>
                       </tr>
