@@ -384,9 +384,16 @@ export function WeekTimesheet({ timesheetId = "4" }: WeekTimesheetProps) {
       setModalOpen(false);
       queryClient.invalidateQueries({ queryKey: ["timesheet", timesheetId] });
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Unable to save entry right now.",
-      );
+      const message =
+        err instanceof Error ? err.message : "Unable to save entry right now.";
+      // Provide helpful message for serverless 404 errors
+      if (message.includes("Not found") || message.includes("404")) {
+        setError(
+          "Entry not found. On serverless platforms, newly created entries may not persist between requests. Try refreshing the page.",
+        );
+      } else {
+        setError(message);
+      }
     }
   };
 
@@ -397,11 +404,18 @@ export function WeekTimesheet({ timesheetId = "4" }: WeekTimesheetProps) {
       await deleteEntryMutation.mutateAsync(taskId);
       queryClient.invalidateQueries({ queryKey: ["timesheet", timesheetId] });
     } catch (err) {
-      setError(
+      const message =
         err instanceof Error
           ? err.message
-          : "Unable to delete entry right now.",
-      );
+          : "Unable to delete entry right now.";
+      // Provide helpful message for serverless 404 errors
+      if (message.includes("Not found") || message.includes("404")) {
+        setError(
+          "Entry not found. On serverless platforms, newly created entries may not persist between requests. Try refreshing the page.",
+        );
+      } else {
+        setError(message);
+      }
     } finally {
       setDeletingId(null);
     }

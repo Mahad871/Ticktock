@@ -39,7 +39,12 @@ export default function Home() {
       callbackUrl: "/dashboard",
     });
     if (result?.error || result?.ok === false) {
-      setError(result?.error ?? "Unable to sign in.");
+      // Map NextAuth error codes to user-friendly messages
+      const errorMessage =
+        result?.error === "CredentialsSignin"
+          ? "Invalid email or password. Please try again."
+          : (result?.error ?? "Unable to sign in. Please try again.");
+      setError(errorMessage);
       setSubmitting(false);
       return;
     }

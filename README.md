@@ -36,8 +36,9 @@ Timesheet dashboard built with Next.js 16 (App Router), React 19, and TailwindCS
 
 ## Assumptions & notes
 
-- Authentication is a credentials flow: any email with password `password`. “Remember me” sets session to 30 days; unchecked is 12 hours. Protected routes are enforced via NextAuth middleware.
+- Authenticationflow: any email with password `password`. "Remember me" sets session to 30 days; unchecked is 12 hours. Protected routes are enforced via NextAuth middleware.
 - Data is mocked/in-memory (`src/lib/mock-data.ts`) and exposed through Next.js API routes; no external database or persistence.
+- **Serverless limitation**: On Vercel, newly created/modified data may not persist between requests due to serverless function cold starts. Pre-existing mock entries work; newly added entries may return 404 on edit/delete. This is expected behavior for in-memory storage on serverless platforms.
 - UI components follow shadcn/ui conventions; add new primitives with `npx shadcn@latest add <component>` using `components.json`.
 - Seeded timesheet weeks are 2026-dated sample data intended for UI/demo use.
 
