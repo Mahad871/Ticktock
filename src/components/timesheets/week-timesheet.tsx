@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { MoreHorizontal, Plus } from "lucide-react";
+import { Loader2, MoreHorizontal, Plus } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { AppShell } from "@/components/layout/app-shell";
@@ -104,23 +104,38 @@ function TaskRow({
   }, [open]);
 
   return (
-    <div className="border-border-strong bg-surface flex items-center gap-3 rounded-md border border-dashed px-3 py-2">
-      <div className="flex-1 text-sm text-foreground">{task.description}</div>
+    <div
+      className={`border-border-strong bg-surface flex items-center gap-3 rounded-md border border-dashed px-3 py-2 transition-opacity ${deleting ? "opacity-50" : ""}`}
+    >
+      <div className="flex-1 text-sm text-foreground">
+        {deleting ? (
+          <span className="flex items-center gap-2">
+            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+            Deleting...
+          </span>
+        ) : (
+          task.description
+        )}
+      </div>
       <div className="flex items-center gap-2 text-xs text-muted-foreground">
-        <span>{task.hours} hrs</span>
-        <span className="border-border-strong rounded-sm border px-2 py-[2px] text-foreground">
-          {task.project}
-        </span>
+        {!deleting && (
+          <>
+            <span>{task.hours} hrs</span>
+            <span className="border-border-strong rounded-sm border px-2 py-[2px] text-foreground">
+              {task.project}
+            </span>
+          </>
+        )}
         <div className="relative">
           <button
-            className="hover:bg-surface-muted rounded px-1 py-1 text-muted-foreground"
+            className="hover:bg-surface-muted rounded px-1 py-1 text-muted-foreground disabled:opacity-50"
             aria-label="More"
             onClick={() => setOpen((v) => !v)}
-            disabled={disabled}
+            disabled={disabled || deleting}
           >
             <MoreHorizontal className="h-4 w-4" />
           </button>
-          {open && (
+          {open && !deleting && (
             <div
               ref={menuRef}
               className="bg-surface absolute right-0 top-8 z-20 flex flex-col rounded-lg border border-border py-1 pr-6 shadow-lg"
@@ -143,7 +158,7 @@ function TaskRow({
                 }}
                 disabled={disabled}
               >
-                {deleting ? "Deleting..." : "Delete"}
+                Delete
               </button>
             </div>
           )}
@@ -177,22 +192,34 @@ function Modal({
   onClose: () => void;
 }) {
   const dialogRef = useRef<HTMLDivElement | null>(null);
+  const onCloseRef = useRef(onClose);
 
+  // Keep onClose ref up to date
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
+
+  // Focus first element only when modal opens
   useEffect(() => {
     if (!open) return;
     const first = dialogRef.current?.querySelector<HTMLElement>(
       'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
     );
     first?.focus();
+  }, [open]);
+
+  // Handle escape key separately to avoid re-running focus logic
+  useEffect(() => {
+    if (!open) return;
     const handleKey = (evt: KeyboardEvent) => {
       if (evt.key === "Escape") {
         evt.stopPropagation();
-        onClose();
+        onCloseRef.current();
       }
     };
     document.addEventListener("keydown", handleKey);
     return () => document.removeEventListener("keydown", handleKey);
-  }, [open, onClose]);
+  }, [open]);
 
   if (!open) return null;
   return (
