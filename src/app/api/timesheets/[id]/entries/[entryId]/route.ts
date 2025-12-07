@@ -25,10 +25,10 @@ function recomputeTimesheetHours(timesheetId: string) {
   });
 }
 
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: { id: string; entryId: string } },
-) {
+type EntryRouteContext = { params: { id: string; entryId: string } };
+
+export async function PUT(request: NextRequest, context: EntryRouteContext) {
+  const { params } = context;
   const session = await auth();
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -58,10 +58,8 @@ export async function PUT(
   return NextResponse.json({ data: updated });
 }
 
-export async function DELETE(
-  _request: NextRequest,
-  { params }: { params: { id: string; entryId: string } },
-) {
+export async function DELETE(_request: NextRequest, context: EntryRouteContext) {
+  const { params } = context;
   const session = await auth();
   if (!session?.user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
