@@ -47,22 +47,31 @@ type WeekTimesheetProps = {
 
 function ProgressBar({ value, max }: { value: number; max: number }) {
   const pct = Math.min(100, Math.round((value / max) * 100));
+  // Keep the bubble within the bar bounds
+  const bubblePct = Math.min(95, Math.max(5, pct));
   return (
-    <div className="relative flex items-center justify-end gap-3">
-      <div className="text-xs font-semibold text-foreground">
-        {value}/{max} hrs
-      </div>
-      <div className="w-36">
-        <div className="relative h-1.5 rounded-full bg-border">
-          {/* dynamic width for progress bar */}
+    <div className="relative space-y-2">
+      <div className="flex items-center gap-3">
+        <div className="relative w-full min-w-[200px] overflow-visible">
           <div
-            className="bg-status-warn-foreground absolute left-0 top-0 h-1.5 rounded-full"
-            style={{ width: `${pct}%` }}
-          />
+            className="absolute -top-10 flex w-full -translate-x-1/2 flex-col items-center sm:-top-10"
+            style={{ left: `${bubblePct}%` }}
+          >
+            <div className="bg-surface rounded-xl px-3 py-2 text-xs font-semibold text-foreground shadow-md">
+              {value}/{max} hrs
+            </div>
+            <div className="bg-surface h-2 w-3 -translate-y-[6px] rotate-45" />
+          </div>
+          <div className="mx-3 h-2 rounded-full bg-border sm:mx-1 sm:h-2">
+            <div
+              className="bg-status-warn-foreground h-2 rounded-full transition-all sm:h-2"
+              style={{ width: `${pct}%` }}
+            />
+          </div>
         </div>
-      </div>
-      <div className="text-[10px] font-semibold text-muted-foreground/70">
-        100%
+        <div className="text-xs font-semibold text-muted-foreground">
+          {pct}%
+        </div>
       </div>
     </div>
   );
@@ -372,7 +381,7 @@ export function WeekTimesheet({ timesheetId = "4" }: WeekTimesheetProps) {
 
       <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
         <div className="bg-surface rounded-xl border border-border shadow-sm">
-          <div className="flex items-center justify-between border-b border-border px-6 py-4">
+          <div className="flex flex-col gap-3 border-b border-border px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
             <div className="space-y-1">
               <h1 className="text-lg font-semibold text-foreground">
                 This week’s timesheet
@@ -381,10 +390,12 @@ export function WeekTimesheet({ timesheetId = "4" }: WeekTimesheetProps) {
                 {sheetPending ? "Loading..." : timesheetRange}
               </p>
             </div>
-            <ProgressBar value={totalHours} max={40} />
+            <div className="mt-7 w-full sm:w-auto">
+              <ProgressBar value={totalHours} max={40} />
+            </div>
           </div>
 
-          <div className="space-y-6 px-6 py-6">
+          <div className="space-y-6 px-2 py-6 sm:px-6">
             {(sheetPending || entriesPending) && (
               <>
                 {[...Array(5)].map((_, idx) => (

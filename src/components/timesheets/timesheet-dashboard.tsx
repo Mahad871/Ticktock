@@ -375,93 +375,96 @@ export function TimesheetDashboard() {
           </div>
 
           <div className="px-8 pb-6">
-            <div className="overflow-hidden rounded-lg border border-border">
-              <table className="bg-surface min-w-full divide-y divide-border text-sm">
-                <thead className="bg-muted/70 text-xs font-semibold uppercase text-muted-foreground">
-                  <tr>
-                    <th className="px-4 py-3 text-left">
-                      <span className="inline-flex items-center gap-1">
-                        Week #{" "}
-                        <span className="text-muted-foreground/70">↓</span>
-                      </span>
-                    </th>
-                    <th className="px-4 py-3 text-left">
-                      <span className="inline-flex items-center gap-1">
-                        Date <span className="text-muted-foreground/70">↓</span>
-                      </span>
-                    </th>
-                    <th className="px-4 py-3 text-left">
-                      <span className="inline-flex items-center gap-1">
-                        Status{" "}
-                        <span className="text-muted-foreground/70">↓</span>
-                      </span>
-                    </th>
-                    <th className="px-4 py-3 text-left">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-surface divide-y divide-border text-sm">
-                  {isPending &&
-                    [...Array(pageSize)].map((_, idx) => (
-                      <tr key={`skeleton-${idx}`}>
-                        <td className="bg-surface px-4 py-4">
-                          <div className="h-4 w-10 animate-pulse rounded bg-muted-foreground/20" />
-                        </td>
-                        <td className="px-4 py-4">
-                          <div className="h-4 w-40 animate-pulse rounded bg-muted-foreground/20" />
-                        </td>
-                        <td className="px-4 py-4">
-                          <div className="h-5 w-24 animate-pulse rounded bg-muted-foreground/20" />
-                        </td>
-                        <td className="px-4 py-4">
-                          <div className="h-4 w-16 animate-pulse rounded bg-muted-foreground/20" />
+            <div className="overflow-x-auto">
+              <div className="min-w-[640px] overflow-hidden rounded-lg border border-border">
+                <table className="bg-surface min-w-full divide-y divide-border text-sm">
+                  <thead className="bg-muted/70 text-xs font-semibold uppercase text-muted-foreground">
+                    <tr>
+                      <th className="px-4 py-3 text-left">
+                        <span className="inline-flex items-center gap-1">
+                          Week #{" "}
+                          <span className="text-muted-foreground/70">↓</span>
+                        </span>
+                      </th>
+                      <th className="px-4 py-3 text-left">
+                        <span className="inline-flex items-center gap-1">
+                          Date{" "}
+                          <span className="text-muted-foreground/70">↓</span>
+                        </span>
+                      </th>
+                      <th className="px-4 py-3 text-left">
+                        <span className="inline-flex items-center gap-1">
+                          Status{" "}
+                          <span className="text-muted-foreground/70">↓</span>
+                        </span>
+                      </th>
+                      <th className="px-4 py-3 text-left">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-surface divide-y divide-border text-sm">
+                    {isPending &&
+                      [...Array(pageSize)].map((_, idx) => (
+                        <tr key={`skeleton-${idx}`}>
+                          <td className="bg-surface px-4 py-4">
+                            <div className="h-4 w-10 animate-pulse rounded bg-muted-foreground/20" />
+                          </td>
+                          <td className="px-4 py-4">
+                            <div className="h-4 w-40 animate-pulse rounded bg-muted-foreground/20" />
+                          </td>
+                          <td className="px-4 py-4">
+                            <div className="h-5 w-24 animate-pulse rounded bg-muted-foreground/20" />
+                          </td>
+                          <td className="px-4 py-4">
+                            <div className="h-4 w-16 animate-pulse rounded bg-muted-foreground/20" />
+                          </td>
+                        </tr>
+                      ))}
+                    {!isPending && isError && (
+                      <tr>
+                        <td
+                          colSpan={4}
+                          className="px-4 py-6 text-center text-destructive"
+                        >
+                          {error instanceof Error
+                            ? error.message
+                            : "Unable to load timesheets."}
                         </td>
                       </tr>
-                    ))}
-                  {!isPending && isError && (
-                    <tr>
-                      <td
-                        colSpan={4}
-                        className="px-4 py-6 text-center text-destructive"
-                      >
-                        {error instanceof Error
-                          ? error.message
-                          : "Unable to load timesheets."}
-                      </td>
-                    </tr>
-                  )}
-                  {!isPending && !isError && timesheets.length === 0 && (
-                    <tr>
-                      <td
-                        colSpan={4}
-                        className="px-4 py-6 text-center text-muted-foreground"
-                      >
-                        No timesheets found.
-                      </td>
-                    </tr>
-                  )}
-                  {!isPending &&
-                    !isError &&
-                    paginated.map((sheet) => (
-                      <tr key={sheet.id} className="hover:bg-primary/5">
-                        <td className="bg-muted/70 px-4 py-4 text-foreground">
-                          {sheet.week}
-                        </td>
-                        <td className="bg-surface px-4 py-4 text-foreground">
-                          {formatRange(sheet.startDate, sheet.endDate)}
-                        </td>
-                        <td className="bg-surface px-4 py-4">
-                          <StatusBadge status={sheet.status} />
-                        </td>
-                        <td className="bg-surface px-4 py-4 text-primary">
-                          <ActionButton
-                            label={actionLabel(sheet.status)}
-                            onClick={() => navigateToWeekTimesheet(sheet.id)}
-                          />
+                    )}
+                    {!isPending && !isError && timesheets.length === 0 && (
+                      <tr>
+                        <td
+                          colSpan={4}
+                          className="px-4 py-6 text-center text-muted-foreground"
+                        >
+                          No timesheets found.
                         </td>
                       </tr>
-                    ))}
-                </tbody>
-              </table>
+                    )}
+                    {!isPending &&
+                      !isError &&
+                      paginated.map((sheet) => (
+                        <tr key={sheet.id} className="hover:bg-primary/5">
+                          <td className="bg-muted/70 px-4 py-4 text-foreground">
+                            {sheet.week}
+                          </td>
+                          <td className="bg-surface px-4 py-4 text-foreground">
+                            {formatRange(sheet.startDate, sheet.endDate)}
+                          </td>
+                          <td className="bg-surface px-4 py-4">
+                            <StatusBadge status={sheet.status} />
+                          </td>
+                          <td className="bg-surface px-4 py-4 text-primary">
+                            <ActionButton
+                              label={actionLabel(sheet.status)}
+                              onClick={() => navigateToWeekTimesheet(sheet.id)}
+                            />
+                          </td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
 
             <div className="mt-4 flex flex-wrap items-center justify-between gap-4 text-sm text-foreground">
