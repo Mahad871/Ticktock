@@ -1,10 +1,17 @@
 "use client";
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useTransition,
+} from "react";
 import { format } from "date-fns";
 import { type DateRange } from "react-day-picker";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
+import { Loader2 } from "lucide-react";
 
 import { AppShell } from "@/components/layout/app-shell";
 import { StatusBadge } from "@/components/timesheets/status-badge";
@@ -46,16 +53,26 @@ function formatRange(start: string, end: string) {
 function ActionButton({
   label,
   onClick,
+  loading,
 }: {
   label: string;
   onClick: () => void;
+  loading?: boolean;
 }) {
   return (
     <button
-      className="text-sm font-medium text-primary hover:underline"
+      className="text-sm font-medium text-primary hover:underline disabled:opacity-60"
       onClick={onClick}
+      disabled={loading}
     >
-      {label}
+      {loading ? (
+        <span className="inline-flex items-center gap-1">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          Opening...
+        </span>
+      ) : (
+        label
+      )}
     </button>
   );
 }
@@ -137,6 +154,8 @@ export function TimesheetDashboard() {
   const [modalOpen, setModalOpen] = useState(false);
   const [modalMode] = useState<ModalMode>("create");
   const activeId: string | null = null;
+  const [navigatingId, setNavigatingId] = useState<string | null>(null);
+  const [, startTransition] = useTransition();
   const [form, setForm] = useState<FormState>({
     week: "",
     startDate: "",
@@ -149,7 +168,7 @@ export function TimesheetDashboard() {
 
   const {
     data: timesheets = [],
-    isPending,
+    isPending: timesheetsPending,
     isError,
     error,
   } = useTimesheetsQuery({
@@ -189,7 +208,10 @@ export function TimesheetDashboard() {
   };
 
   const navigateToWeekTimesheet = (timesheetId: string) => {
-    router.push(`/dashboard/week?week=${timesheetId}`);
+    setNavigatingId(timesheetId);
+    startTransition(() => {
+      router.push(`/dashboard/week?week=${timesheetId}`);
+    });
   };
 
   const totalPages = Math.max(
@@ -407,7 +429,7 @@ export function TimesheetDashboard() {
                   </tr>
                 </thead>
                 <tbody className="bg-surface divide-y divide-border text-sm">
-                  {isPending &&
+                  {timesheetsPending &&
                     [...Array(pageSize)].map((_, idx) => (
                       <tr key={`skeleton-${idx}`}>
                         <td className="bg-surface px-4 py-4">
@@ -424,7 +446,7 @@ export function TimesheetDashboard() {
                         </td>
                       </tr>
                     ))}
-                  {!isPending && isError && (
+                  {!timesheetsPending && isError && (
                     <tr>
                       <td
                         colSpan={4}
@@ -436,17 +458,19 @@ export function TimesheetDashboard() {
                       </td>
                     </tr>
                   )}
-                  {!isPending && !isError && timesheets.length === 0 && (
-                    <tr>
-                      <td
-                        colSpan={4}
-                        className="px-4 py-6 text-center text-muted-foreground"
-                      >
-                        No timesheets found.
-                      </td>
-                    </tr>
-                  )}
-                  {!isPending &&
+                  {!timesheetsPending &&
+                    !isError &&
+                    timesheets.length === 0 && (
+                      <tr>
+                        <td
+                          colSpan={4}
+                          className="px-4 py-6 text-center text-muted-foreground"
+                        >
+                          No timesheets found.
+                        </td>
+                      </tr>
+                    )}
+                  {!timesheetsPending &&
                     !isError &&
                     paginated.map((sheet) => (
                       <tr key={sheet.id} className="hover:bg-primary/5">
@@ -462,6 +486,7 @@ export function TimesheetDashboard() {
                         <td className="bg-surface px-4 py-4 text-primary">
                           <ActionButton
                             label={actionLabel(sheet.status)}
+                            loading={navigatingId === sheet.id}
                             onClick={() => navigateToWeekTimesheet(sheet.id)}
                           />
                         </td>
