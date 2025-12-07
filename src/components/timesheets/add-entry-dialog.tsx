@@ -33,8 +33,6 @@ export function AddEntryDialog({
   const [project, setProject] = useState("Project Name");
   const [typeOfWork, setTypeOfWork] = useState("Bug fixes");
   const [description, setDescription] = useState("");
-  // placeholder for future note support
-  const [note, setNote] = useState("");
   const [hours, setHours] = useState(12);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -45,7 +43,6 @@ export function AddEntryDialog({
       setProject("Project Name");
       setTypeOfWork("Bug fixes");
       setDescription("");
-      setNote("");
       setHours(12);
       setError(null);
     } else {

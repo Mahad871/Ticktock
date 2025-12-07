@@ -11,7 +11,6 @@ import { StatusBadge } from "@/components/timesheets/status-badge";
 import { TimesheetForm } from "@/components/timesheets/timesheet-form";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import { Input } from "@/components/ui/input";
 import type { TimesheetStatus } from "@/lib/timesheets";
 import { cn } from "@/lib/utils";
 import {
@@ -136,8 +135,8 @@ export function TimesheetDashboard() {
   const [showStatusMenu, setShowStatusMenu] = useState(false);
 
   const [modalOpen, setModalOpen] = useState(false);
-  const [modalMode, setModalMode] = useState<ModalMode>("create");
-  const [activeId, setActiveId] = useState<string | null>(null);
+  const [modalMode] = useState<ModalMode>("create");
+  const activeId: string | null = null;
   const [form, setForm] = useState<FormState>({
     week: "",
     startDate: "",

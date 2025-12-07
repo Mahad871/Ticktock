@@ -1,5 +1,4 @@
 "use client";
-/* eslint-disable @next/next/no-inline-styles, react-native/no-inline-styles */
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { MoreHorizontal, Plus } from "lucide-react";
