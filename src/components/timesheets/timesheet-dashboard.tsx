@@ -540,7 +540,7 @@ export function TimesheetDashboard() {
                   onClick={() => goToPage(page + 1)}
                   disabled={page === totalPages}
                   className={cn(
-                    "px-3 py-2 text-[#4b5563] hover:text-primary",
+                    "border-l border-[#e7ebf3] px-3 py-2 text-[#4b5563] hover:text-primary",
                     "disabled:cursor-not-allowed disabled:text-[#c0c4cf]",
                   )}
                 >
